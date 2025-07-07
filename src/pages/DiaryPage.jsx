@@ -1,7 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
-import Header from '../components/Header.jsx';
 
-function Diary() {
+function DiaryPage() {
   const navigate = useNavigate();
 
   const handleGoBack = () => {
@@ -10,7 +9,6 @@ function Diary() {
 
   return (
     <div>
-      <Header />
       <div style={{ padding: '20px' }}>
         <h2>일기 페이지</h2>
         <Link to="/" style={{ color: 'blue' }}>
@@ -21,5 +19,4 @@ function Diary() {
     </div>
   );
 }
-
-export default Diary;
+export default DiaryPage;

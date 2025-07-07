@@ -1,9 +1,6 @@
-import Header from '../components/Header.jsx';
-
-function Login() {
+function LoginPage() {
   return (
     <div>
-      <Header />
       <div style={{ padding: '20px', textAlign: 'center' }}>
         <h2>로그인 페이지</h2>
         <br />
@@ -15,4 +12,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default LoginPage;
