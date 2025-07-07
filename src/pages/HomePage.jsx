@@ -1,4 +1,4 @@
-// src/pages/HomePage.jsx
+
 import { Link } from "react-router-dom";
 import { ROUTES } from "@route/routes.js";
 
@@ -28,11 +28,13 @@ function HomePage() {
             key={page.path}
             to={page.path}
             style={{
+
               padding: "10px 15px",
               backgroundColor: "red",
               color: "white",
               textDecoration: "none",
               borderRadius: "5px",
+
             }}
           >
             {page.name}

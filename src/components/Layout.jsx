@@ -1,4 +1,4 @@
-// src/components/Layout.jsx
+
 import React, { useState } from 'react';
 import Sidebar from '@components/Sidebar.jsx';
 

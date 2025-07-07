@@ -1,4 +1,4 @@
-// src/pages/DiaryPage.jsx
+
 import { Link, useNavigate } from "react-router-dom";
 
 function DiaryPage() {
@@ -10,6 +10,7 @@ function DiaryPage() {
 
   return (
     <div>
+
       <div style={{ padding: "20px" }}>
         <h2>일기 페이지</h2>
         <Link to="/" style={{ color: "blue" }}>

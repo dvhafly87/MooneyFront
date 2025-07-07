@@ -1,4 +1,4 @@
-// src/route/routes.js
+
 export const ROUTES = {
   LOGIN: "/login",
   ROOT: "/",
