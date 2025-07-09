@@ -6,6 +6,7 @@ import { BiBarChartAlt } from 'react-icons/bi';
 import { FiBookOpen } from 'react-icons/fi';
 import { LuNotebookPen } from 'react-icons/lu';
 import { useState } from 'react';
+import NotificationPanel from '@components/NotificationPanel';
 
 const Sidebar = ({
   isOpen,
@@ -120,7 +121,7 @@ const Sidebar = ({
             style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
             onClick={handleLogout}
           >
-            {/* 백엔드에서 로그인 관련해 액세스 토큰을 가져와야 함
+            {/* 백엔드에서 로그인 관련해 데이터 필요
           로그인 된 상태일 시 로그아웃
           로그인 안된 상태일 시 로그인 */}
             {/* 로그인 태그 */}
@@ -142,6 +143,10 @@ const Sidebar = ({
 
       {/* 알림창 */}
       {isNotificationPanelOpen && (
+        <NotificationPanel onClose={onCloseNotification} notificationRef={notificationRef} />
+      )}
+
+      {/* {isNotificationPanelOpen && (
         <div
           ref={notificationRef}
           style={{
@@ -154,13 +159,11 @@ const Sidebar = ({
             zIndex: 100,
           }}
         >
-          {/* 헤더 */}
           <div style={{ display: 'flex' }}>
             <h3>알림 창</h3>
             <button onClick={onCloseNotification}>X</button>
           </div>
 
-          {/* 알림 내용 */}
           <div
             onClick={() => {
               navigate(ROUTES.CHALLENGE);
@@ -184,7 +187,7 @@ const Sidebar = ({
             구독 추가
           </div>
         </div>
-      )}
+      )} */}
     </>
   );
 };
