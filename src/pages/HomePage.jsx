@@ -4,6 +4,7 @@ import { Apexcharts } from '../components/Apexcharts';
 import MyCalendar from '../components/MyCalendar';
 import CategoryChart from '../components/CategoryChart';
 import '../css/homepage.css';
+import chatImg from '../img/chatbotmooney.png';
 
 function HomePage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -25,17 +26,35 @@ function HomePage() {
 
         <div className="right-column">
           <div className="income-card">
-            <div className="icome-card-title">수입</div>
-            <Apexcharts win={70} defeat={30} />
-            <div className="income-card-amount">20000 원</div>
+            <div className="income-card-left">
+              <div className="icome-card-title">수입</div>
+              <div className="income-card-amount">20000 원</div>
+            </div>
+            <div className="income-card-chart">
+              <Apexcharts win={70} defeat={30} />
+            </div>
           </div>
 
           <div className="outcome-card">
-            <div className="outcome-card-title">지출</div>
-            <Apexcharts win={40} defeat={60} />
+            <div className="outcome-card-left">
+              <div className="outcome-card-title">지출</div>
+              <div className="outcome-card-amount">20000 원</div>
+            </div>
+            <div className="outcome-card-chart">
+              <Apexcharts win={70} defeat={30} />
+            </div>
           </div>
 
-          <div className="chatbot-mooney">무니</div>
+          <div className="chatbot-mooney">
+            <div className="chatbot-bubble">
+              <p>
+                무니가 예측한 지출은 <span className="highlight">72,000</span>원이에요.
+                <br />
+                목표에 맞을까요?
+              </p>
+            </div>
+            <img src={chatImg} alt="챗봇 무니" className="chatboticon" />
+          </div>
         </div>
       </div>
     </div>
