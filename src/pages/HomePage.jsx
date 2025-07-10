@@ -6,11 +6,14 @@ import CategoryChart from '../components/CategoryChart';
 import '../css/homepage.css';
 
 function HomePage() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const isLoggedIn = true;
+  const userId = 'user01';
 
   return (
     <div className={`homepage-container ${sidebarOpen ? 'sidebar-open' : ''}`}>
-      <TogglePage onToggle={setSidebarOpen} />
+      <TogglePage onToggle={setSidebarOpen} isLoggedIn={isLoggedIn} userId={userId} />
 
       <div className="main-content-wrapper">
         <div className="left-column">

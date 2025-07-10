@@ -1,10 +1,10 @@
+/* homepage.css */
 body {
   background-color: #FAFAFA;
   margin: 0;
   padding: 0;
 }
 
-/* 페이지 전체 밀기 */
 .homepage-container {
   transition: margin-left 0.3s ease;
   margin-left: 0;
@@ -15,7 +15,6 @@ body {
   margin-left: 260px;
 }
 
-/* 전체 콘텐츠 */
 .main-content-wrapper {
   display: flex;
   justify-content: center;
@@ -24,14 +23,12 @@ body {
   padding: 20px 40px;
 }
 
-/* 왼쪽 컬럼 */
 .left-column {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-/* 오른쪽 카드들 */
 .right-column {
   display: flex;
   flex-direction: column;
@@ -39,7 +36,6 @@ body {
   height: 781px;
 }
 
-/* 달력 박스 */
 .calender-container {
   width: 574px;
   height: 781px;
@@ -49,7 +45,6 @@ body {
   display: inline-block;
 }
 
-/* 카드 공통 */
 .income-card,
 .outcome-card,
 .chatbot-mooney {
@@ -72,4 +67,20 @@ body {
   font-size: 18px;
   margin-bottom: 12px;
   margin-top: 0;
+}
+
+@media (max-width: 768px) {
+  .main-content-wrapper {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .right-column {
+    display: none;
+  }
+
+  .calender-container {
+    width: 90%;
+    height: auto;
+  }
 }

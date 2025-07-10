@@ -13,7 +13,7 @@ export const Apexcharts = ({ win, defeat }) => {
         speed: 800,
       },
     },
-    labels: ['승리', '패배'],
+    labels: ['수입', '지출'],
     colors: ['#3C82F6', '#FF4D4D'],
     legend: { show: false },
     dataLabels: { enabled: false },
