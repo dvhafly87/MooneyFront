@@ -1,12 +1,17 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '@route/routes.js';
-import { FaRegBell, FaSignOutAlt, FaUser, FaSignInAlt } from 'react-icons/fa';
-import { PiMoneyWavy } from 'react-icons/pi';
-import { BiBarChartAlt } from 'react-icons/bi';
-import { FiBookOpen } from 'react-icons/fi';
-import { LuNotebookPen } from 'react-icons/lu';
 import { useState } from 'react';
 import NotificationPanel from '@components/NotificationPanel';
+import mainImg from '@img/main.png';
+import diaryIcon from '@img/book.png';
+import wonImg from '@img/won.png';
+import offBellImg from '@img/off_bell.png';
+import onBellImg from '@img/on_bell.png';
+import pencilImg from '@img/pencil.png';
+import chaImg from '@img/challenge.png';
+import mypageImg from '@img/mypage.png';
+import loginIcon from '@img/login.png';
+import logoutIcon from '@img/logout.png';
 
 const Sidebar = ({
   isOpen,
@@ -20,14 +25,16 @@ const Sidebar = ({
 
   const [isLogin, setIsLogin] = useState(false);
 
+  const [hasNotification, setHasNotification] = useState(true);
+
   const sidebarMenu = [
     // 알림(모달), 전체지출, 챌린지, 다이어리, 가계부 적기
-    // !전체 지출과 가계부 적기 path를 동일하게 두었음 수정해야 함
-    { id: 'notify', label: '알림', icon: FaRegBell },
-    { id: 'allExpense', label: '전체수입지출', icon: PiMoneyWavy, path: ROUTES.ACCOUNT_BOOK },
-    { id: 'challenge', label: '챌린지', icon: BiBarChartAlt, path: ROUTES.CHALLENGE },
-    { id: 'diary', label: '다이어리', icon: LuNotebookPen, path: ROUTES.DIARY },
-    { id: 'accountBook', label: '가계부 적기', icon: FiBookOpen, path: ROUTES.ACCOUNT_BOOK },
+    // !전체 지출과 가계부 적기 path를 동일하게 두었음 수정해야 함 (가계부 모달 창으로 바로 간다던지 그런 식으로)
+    { id: 'notify', label: '알림', icon: hasNotification ? onBellImg : offBellImg },
+    { id: 'allExpense', label: '전체수입지출', icon: wonImg, path: ROUTES.ACCOUNT_BOOK },
+    { id: 'challenge', label: '챌린지', icon: chaImg, path: ROUTES.CHALLENGE },
+    { id: 'diary', label: '다이어리', icon: diaryIcon, path: ROUTES.DIARY },
+    { id: 'accountBook', label: '가계부 적기', icon: pencilImg, path: ROUTES.ACCOUNT_BOOK },
   ];
 
   const handleMenuClick = (path, itemId) => {
@@ -52,96 +59,181 @@ const Sidebar = ({
 
   return (
     <>
+      {/* 사이드바 */}
       <div
         style={{
-          width: '180px',
-          height: '100vh',
-          backgroundColor: 'lightcyan',
           position: 'fixed',
-          left: 0,
           top: 0,
+          left: 0,
+          width: '260px',
+          height: '100vh',
+          backgroundColor: '#e9ecf2',
+          boxShadow: '2px 0 8px rgba(0,0,0,0.15)',
+          padding: '30px 20px',
+          boxSizing: 'border-box',
+          zIndex: 1000,
           transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
-          padding: '1rem',
           transition: 'transform 0.3s ease',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
         }}
       >
-        {/* 로고 영역 */}
-        <div
-          style={{
-            display: 'flex',
-            cursor: 'pointer',
-            alignItems: 'center',
-            gap: '10px',
-            padding: '10px 0',
-            borderBottom: '1px solid black',
-            marginBottom: '10px',
-          }}
-          onClick={handleRootClick}
-        >
-          <img src="../img/logo.png" style={{ width: '20px', height: '20px' }} alt="로고$" />
-          <span>Mooney</span>
-        </div>
-
-        {/* 메뉴 리스트 */}
+        {/* 사이드바 헤더 */}
         <div>
-          {/* 메뉴 아이템 */}
-          {sidebarMenu.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path && item.path !== '';
-
-            return (
-              <div
-                key={item.id}
-                onClick={() => {
-                  handleMenuClick(item.path, item.id);
-                }}
-                style={{
-                  backgroundColor: isActive ? 'blue' : 'transparent',
-                  marginBottom: '15px',
-                  cursor: 'pointer',
-                }}
-              >
-                <Icon size={15} />
-                <span>{item.label}</span>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* 하단 메뉴 마이페이지, 로그인/로그아웃 */}
-        <div style={{ position: 'absolute', bottom: '50px' }}>
-          <div
-            onClick={handleUserClick}
-            style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
-          >
-            <FaUser size={10} />
-            <span>My Page</span>
+          <div style={{ textAlign: 'center', cursor: 'pointer' }} onClick={handleRootClick}>
+            <img
+              src={mainImg}
+              alt="Mooney"
+              style={{
+                width: '60px',
+                height: 'auto',
+                marginBottom: '10px',
+              }}
+            />
+            <h2 style={{ margin: '0 0 10px 0', fontSize: '24px' }}>Mooney</h2>
           </div>
-          <div
-            style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
-            onClick={handleLogout}
-          >
-            {/* 백엔드에서 로그인 관련해 데이터 필요
-          로그인 된 상태일 시 로그아웃
-          로그인 안된 상태일 시 로그인 */}
-            {/* 로그인 태그 */}
-            {/* 로그아웃 태그 */}
+
+          <p style={{ margin: 0, fontSize: '14px', textAlign: 'center' }}>
             {isLogin ? (
               <>
-                <FaSignOutAlt size={10} />
-                <span>로그아웃</span>
+                Welcome,&nbsp;
+                <span style={{ color: '#6B69EE' }}>{userId}</span>님!
               </>
             ) : (
-              <>
-                <FaSignInAlt size={10} />
-                <span>로그인</span>
-              </>
+              '로그인을 먼저 해주세요!'
             )}
+          </p>
+
+          {/* 메뉴 리스트 */}
+          <ul
+            style={{
+              listStyle: 'none',
+              padding: 0,
+              marginTop: '30px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              fontSize: '16px',
+              fontWeight: 500,
+              color: '#333',
+            }}
+          >
+            {sidebarMenu.map((item) => {
+              const isActive = location.pathname === item.path && item.path !== '';
+
+              return (
+                <li
+                  key={item.id}
+                  onClick={() => handleMenuClick(item.path, item.id)}
+                  style={{
+                    cursor: 'pointer',
+                    padding: '6px 10px',
+                    borderRadius: '8px',
+                    transition: 'background 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    backgroundColor: isActive ? '#d6dce6' : 'transparent',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) {
+                      e.target.style.backgroundColor = '#d6dce6';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) {
+                      e.target.style.backgroundColor = 'transparent';
+                    }
+                  }}
+                >
+                  <img
+                    src={item.icon}
+                    alt={item.label}
+                    style={{
+                      width: '18px',
+                      height: '18px',
+                    }}
+                  />
+                  {item.label}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+        {/* 사이드바 푸터 */}
+        <div
+          style={{
+            fontSize: '14px',
+            color: '#777',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+          }}
+        >
+          <div
+            onClick={handleUserClick}
+            style={{
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '6px 10px',
+              borderRadius: '8px',
+              transition: 'background 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#d6dce6';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = 'transparent';
+            }}
+          >
+            <img
+              src={mypageImg}
+              alt="마이페이지"
+              style={{
+                width: '18px',
+                height: '18px',
+              }}
+            />
+            My page
+          </div>
+
+          <div
+            onClick={handleLogout}
+            style={{
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '6px 10px',
+              borderRadius: '8px',
+              transition: 'background 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#d6dce6';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = 'transparent';
+            }}
+          >
+            <img
+              src={isLogin ? logoutIcon : loginIcon}
+              alt={isLogin ? 'Logout' : 'Login'}
+              style={{
+                width: '18px',
+                height: '18px',
+              }}
+            />
+            {isLogin ? 'Logout' : 'Login'}
           </div>
         </div>
       </div>
 
-      {/* 알림창 */}
+      {/* 알림창 - 기존 기능 유지 */}
+
       {isNotificationPanelOpen && (
         <NotificationPanel onClose={onCloseNotification} notificationRef={notificationRef} />
       )}

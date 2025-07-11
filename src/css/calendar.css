@@ -1,0 +1,108 @@
+.react-calendar {
+  width: 529.57px;
+  height: 393.61px;
+  background: #f7f6f5;
+  border: none;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  font-family: 'Pretendard', sans-serif;
+  padding: 20px;
+  box-sizing: border-box; /* padding 포함 계산 */
+  overflow: hidden; /* 내부 넘침 방지 */
+}
+
+/* 네비게이션 (월/년 이동) */
+.react-calendar__navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.react-calendar__navigation button {
+  background: none;
+  color: #2b2b2b;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 5px 10px;
+  transition: 0.2s ease;
+}
+
+.react-calendar__navigation button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* 요일 */
+.react-calendar__month-view__weekdays {
+  text-align: center;
+  font-weight: bold;
+  color: #666;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  margin-bottom: 5px;
+}
+
+.react-calendar__month-view__weekdays__weekday {
+  padding: 8px 0;
+}
+
+/* 날짜 셀 */
+.react-calendar__tile {
+  padding: 12px 0;
+  text-align: center;
+  background: none;
+  border-radius: 10px;
+  transition: background 0.2s ease;
+  font-size: 0.875rem;
+  color: #333;
+}
+
+.react-calendar__tile--now {
+  background: #e3f2fd;
+  font-weight: bold;
+  color: #7fbdfb;
+}
+
+.react-calendar__tile--active {
+  background: #8cc5ff;
+  color: white;
+  font-weight: bold;
+}
+
+.react-calendar__tile:hover {
+  background: #eeeeee;
+  cursor: pointer;
+}
+
+/* 수입/지출 표시용 커스텀 박스 */
+.calendar-finance {
+  font-size: 10px;
+  margin-top: 4px;
+  line-height: 1.2;
+}
+
+.calendar-finance .income {
+  color: #3c82f6;
+}
+
+.calendar-finance .expense {
+  color: #ff4d4d;
+}
+
+.react-calendar__tile--active .calendar-finance .income {
+  color: #ffffff; /* 혹은 contrast 높은 색상 */
+}
+
+.react-calendar__tile--active .calendar-finance .expense {
+  color: #ffdddd; /* 선택된 날짜에서도 잘 보이도록 */
+}
+
+.calendar-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 2rem 0;
+}

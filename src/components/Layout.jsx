@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Sidebar from '@components/Sidebar';
+import MenuIcon from '@img/Menu_Icon.png';
 
 function Layout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -41,9 +42,24 @@ function Layout({ children }) {
       style={{
         display: 'flex',
         minHeight: '100vh',
-        width: '100%',
+        backgroundColor: '#fafafa',
       }}
     >
+      <img
+        src={MenuIcon}
+        alt="Menu"
+        onClick={ToggleSidebar}
+        style={{
+          position: 'fixed',
+          top: '30px',
+          left: '30px',
+          width: '32px',
+          height: '32px',
+          zIndex: 1100,
+          cursor: 'pointer',
+        }}
+      />
+
       {/* 사이드바 */}
       <Sidebar
         isOpen={isSidebarOpen}
@@ -56,46 +72,15 @@ function Layout({ children }) {
       {/* 메인 컨텐츠 */}
       <div
         style={{
+          marginLeft: isSidebarOpen ? '260px' : '0',
           flex: 1,
-          marginLeft: isSidebarOpen ? '180px' : '0px',
           transition: 'margin-left 0.3s ease',
-          backgroundColor: 'lightblue',
+          paddingTop: '50px',
           minHeight: '100vh',
-          width: `calc(100% - ${isSidebarOpen ? '180px' : '0px'})`,
-          position: 'relative',
+          width: '100%',
         }}
       >
-        {/* 토글 버튼 */}
-        <button
-          onClick={ToggleSidebar}
-          style={{
-            position: 'fixed',
-            top: '1rem',
-            left: isSidebarOpen ? '190px' : '1rem',
-            transition: 'left 0.3s ease',
-            zIndex: 1001,
-            padding: '8px 12px',
-            backgroundColor: 'white',
-            border: '1px solid #ccc',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          }}
-        >
-          ☰
-        </button>
-
-        {/* 실제 페이지 내용 */}
-        <div
-          style={{
-            padding: '60px 20px 20px 20px',
-            width: '100%',
-            height: '100%',
-            boxSizing: 'border-box',
-          }}
-        >
-          {children}
-        </div>
+        {children}
       </div>
     </div>
   );

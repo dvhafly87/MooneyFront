@@ -1,0 +1,12 @@
+.chart-bar {
+  width: 90%;
+  height: 300px;
+  background: #f7f6f5;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  font-family: 'Pretendard', sans-serif;
+  padding: 20px;
+  box-sizing: border-box;
+  margin: 3px auto 0 auto;
+  overflow: visible;
+}
