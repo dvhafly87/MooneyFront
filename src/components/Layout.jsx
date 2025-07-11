@@ -37,7 +37,13 @@ function Layout({ children }) {
   }, [isNotificationPanelOpen]);
 
   return (
-    <div style={{ display: 'flex' }}>
+    <div
+      style={{
+        display: 'flex',
+        minHeight: '100vh',
+        width: '100%',
+      }}
+    >
       {/* 사이드바 */}
       <Sidebar
         isOpen={isSidebarOpen}
@@ -47,27 +53,49 @@ function Layout({ children }) {
         notificationRef={notificationRef}
       />
 
-      {/* mainContent */}
+      {/* 메인 컨텐츠 */}
       <div
         style={{
-          marginLeft: isSidebarOpen ? '220px' : 0,
+          flex: 1,
+          marginLeft: isSidebarOpen ? '180px' : '0px',
           transition: 'margin-left 0.3s ease',
           backgroundColor: 'lightblue',
+          minHeight: '100vh',
+          width: `calc(100% - ${isSidebarOpen ? '180px' : '0px'})`,
+          position: 'relative',
         }}
       >
-        {/* 토글 버튼을 사이드바에 두면 토글시 아예 사라질 수 있음 */}
+        {/* 토글 버튼 */}
         <button
           onClick={ToggleSidebar}
           style={{
             position: 'fixed',
             top: '1rem',
-            left: isSidebarOpen ? '160px' : '1rem',
+            left: isSidebarOpen ? '190px' : '1rem',
             transition: 'left 0.3s ease',
+            zIndex: 1001,
+            padding: '8px 12px',
+            backgroundColor: 'white',
+            border: '1px solid #ccc',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
           }}
         >
           ☰
         </button>
-        <div>{children}</div>
+
+        {/* 실제 페이지 내용 */}
+        <div
+          style={{
+            padding: '60px 20px 20px 20px',
+            width: '100%',
+            height: '100%',
+            boxSizing: 'border-box',
+          }}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );
