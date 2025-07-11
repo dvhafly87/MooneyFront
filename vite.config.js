@@ -11,6 +11,7 @@ export default defineConfig({
       '@img': '/src/img',
       '@route': '/src/route',
       '@assets': '/src/assets',
+      '@css': '/src/css',
     },
   },
 });

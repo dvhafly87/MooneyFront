@@ -1,4 +1,4 @@
-import '../css/chartbar.css';
+import '@css/chartbar.css';
 import {
   BarChart,
   Bar,
