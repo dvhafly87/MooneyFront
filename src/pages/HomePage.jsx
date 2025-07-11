@@ -163,6 +163,7 @@ function HomePage() {
             style={{
               width: '120px',
               height: '120px',
+
             }}
           >
             <Apexcharts win={70} defeat={30} />

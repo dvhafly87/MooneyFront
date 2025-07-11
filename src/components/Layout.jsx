@@ -59,6 +59,7 @@ function Layout({ children }) {
           cursor: 'pointer',
         }}
       />
+
       {/* 사이드바 */}
       <Sidebar
         isOpen={isSidebarOpen}

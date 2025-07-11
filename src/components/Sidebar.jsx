@@ -233,6 +233,7 @@ const Sidebar = ({
       </div>
 
       {/* 알림창 - 기존 기능 유지 */}
+
       {isNotificationPanelOpen && (
         <NotificationPanel onClose={onCloseNotification} notificationRef={notificationRef} />
       )}
