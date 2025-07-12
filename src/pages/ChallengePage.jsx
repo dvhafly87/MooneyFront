@@ -23,7 +23,7 @@ function ChallengePage() {
     contents: '',
   });
 
-  // Mock 소비 데이터 (날짜 & 소비금액) (백엔드 가계부 테이블에서 가져올 데이터)
+  // Mock 소비 데이터 (백엔드 MOONEY_EXPENSE 테이블에서 가져올 데이터)
   const mockExpenseData = useMemo(
     () => [
       { date: '2025-01-01', amount: 50000 },
@@ -42,8 +42,7 @@ function ChallengePage() {
     [],
   );
 
-  // 모든 챌린지 데이터 (실제로는 API 통해 가져올 데이터)
-  // reward를 유저가 직접 선택하는 것은 문제가 될 수 있지 않을까 란 생각은 하고 있음
+  // 모든 챌린지 데이터 (실제로는 API에서 가져올 데이터)
   const [mockAllChallenges, setMockAllChallenges] = useState([
     {
       id: 1,
@@ -85,28 +84,25 @@ function ChallengePage() {
       id: 5,
       title: '9월 절약 챌린지',
       startDate: '2025-09-01',
-      endDate: '2025-09-31',
+      endDate: '2025-09-30',
       targetAmount: 500000,
       reward: 100,
-      contents: '3월 쇼핑 절약하기',
+      contents: '9월 쇼핑 절약하기',
     },
   ]);
 
-  // startDate부터 현재(또는 endDate)까지의 지출 합계 계산 (실시간 변경이 가능하게)
-  // ! 목데이터 사용 중, 백엔드에서 가계부 데이터 전부 가져와야함
+  // startDate부터 현재(또는 endDate)까지의 지출 합계 계산
   const calculateCurrentAmount = useCallback(
     (startDate, endDate = null) => {
       const today = new Date();
       const challengeStartDate = new Date(startDate);
 
-      // 시작일이 미래인 경우 → 시작 대기 챌린지로 이동
+      // 시작일이 미래인 경우
       if (challengeStartDate > today) {
         return 0;
       }
 
       const challengeEndDate = endDate ? new Date(endDate) : today;
-
-      // 계산 기준일 결정 (챌린지가 끝났으면 endDate까지, 진행중이면 오늘까지)
       const calculationEndDate = challengeEndDate < today ? challengeEndDate : today;
 
       return mockExpenseData
@@ -125,27 +121,50 @@ function ChallengePage() {
     const startDate = new Date(challenge.startDate);
     const endDate = new Date(challenge.endDate);
 
-    // 0. 시작일이 미래인 경우 → 시작 대기중
+    // 시작일이 미래인 경우
     if (startDate > today) {
       return challengeStatus.PENDING;
     }
 
-    // 1. 목표 금액 초과 → 실패 (언제든)
+    // 목표 금액 초과
     if (currentAmount > challenge.targetAmount) {
       return challengeStatus.FAIL;
     }
 
-    // 2. 챌린지 종료 + 목표 달성 → 성공
+    // 챌린지 종료 + 목표 달성
     if (endDate <= today) {
       return challengeStatus.SUCCESS;
     }
 
-    // 3. 진행중 + 목표 미달성 → 진행중
+    // 진행중
     return challengeStatus.ONGOING;
   }, []);
 
-  // 모든 챌린지에 currentAmount와 status 추가
-  // ! 목데이터 사용 중, 백엔드에서 가계부 데이터 전부 가져와야함
+  // 기간 진행률 계산 함수
+  const calculateTimeProgress = useCallback((startDate, endDate) => {
+    const today = new Date();
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (start >= today) return 0;
+    if (end <= today) return 100;
+
+    const totalDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    const passedDays = Math.ceil((today - start) / (1000 * 60 * 60 * 24));
+
+    return Math.min((passedDays / totalDays) * 100, 100);
+  }, []);
+
+  // 남은 일수 계산 함수
+  const calculateRemainingDays = useCallback((endDate) => {
+    const today = new Date();
+    const end = new Date(endDate);
+
+    if (end <= today) return 0;
+    return Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+  }, []);
+
+  // 모든 챌린지에 계산된 데이터 추가
   const challengesWithStatus = useMemo(() => {
     return mockAllChallenges.map((challenge) => {
       const currentAmount = calculateCurrentAmount(challenge.startDate, challenge.endDate);
@@ -154,15 +173,25 @@ function ChallengePage() {
         challenge.targetAmount > 0
           ? Math.min((currentAmount / challenge.targetAmount) * 100, 100)
           : 0;
+      const timeProgress = calculateTimeProgress(challenge.startDate, challenge.endDate);
+      const remainingDays = calculateRemainingDays(challenge.endDate);
 
       return {
         ...challenge,
         currentAmount,
         status,
         gaugeBar,
+        timeProgress,
+        remainingDays,
       };
     });
-  }, [mockAllChallenges, calculateCurrentAmount, calculateChallengeStatus]);
+  }, [
+    mockAllChallenges,
+    calculateCurrentAmount,
+    calculateChallengeStatus,
+    calculateTimeProgress,
+    calculateRemainingDays,
+  ]);
 
   // 상태별로 챌린지 분류
   const { currentChallenge, previousChallenges, pendingChallenges } = useMemo(() => {
@@ -179,7 +208,7 @@ function ChallengePage() {
     };
   }, [challengesWithStatus]);
 
-  // 전체 챌린지 성공률 계산 (완료된 챌린지만 대상)
+  // 전체 챌린지 성공률 계산
   const successRate = useMemo(() => {
     if (previousChallenges.length === 0) return 0;
 
@@ -207,10 +236,8 @@ function ChallengePage() {
   }, []);
 
   const handleOpenModal = useCallback(() => {
-    console.log('모달 열기 함수');
     setIsModalOpen(true);
     setFormCurrentAmount(0);
-    // 폼 데이터 초기화
     setFormData({
       title: '',
       startDate: '',
@@ -224,7 +251,6 @@ function ChallengePage() {
   const handleCloseModal = useCallback(() => {
     setIsModalOpen(false);
     setFormCurrentAmount(0);
-    // 폼 데이터 초기화
     setFormData({
       title: '',
       startDate: '',
@@ -235,7 +261,6 @@ function ChallengePage() {
     });
   }, []);
 
-  // 폼 데이터 변경 핸들러
   const handleFormChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -244,22 +269,19 @@ function ChallengePage() {
     }));
   }, []);
 
-  // startDate 변경 시 currentAmount 업데이트
   const handleStartDateChange = useCallback(
     (e) => {
       const selectedStartDate = e.target.value;
-      handleFormChange(e); // 폼 데이터도 업데이트
+      handleFormChange(e);
       const calculatedAmount = calculateCurrentAmount(selectedStartDate);
       setFormCurrentAmount(calculatedAmount);
     },
     [handleFormChange, calculateCurrentAmount],
   );
 
-  // 폼 validation 함수
   const validateForm = useCallback((formData) => {
     const { title, startDate, endDate, targetAmount, reward } = formData;
 
-    // 필수 필드 체크
     if (!title.trim()) {
       toast.error('챌린지 이름을 입력해주세요.');
       return false;
@@ -281,10 +303,9 @@ function ChallengePage() {
     }
 
     if (!(reward >= 10 && reward <= 200)) {
-      toast.error('보상 금액은 10포인트 이상 200포인트 이하여야 합니다.');
+      toast.error('보상 포인트는 최소 10포인트, 최대 200포인트입니다.');
       return false;
     }
-    // // 날짜 validation
     // const start = new Date(startDate);
     // const end = new Date(endDate);
 
@@ -296,18 +317,16 @@ function ChallengePage() {
     return true;
   }, []);
 
-  // 챌린지 추가 모달
   const handleCreateChallenge = useCallback(
     (e) => {
       e.preventDefault();
 
-      // validation 체크
       if (!validateForm(formData)) {
-        return; // validation 실패 시 폼 데이터 유지하고 모달도 유지
+        return;
       }
 
       const newChallenge = {
-        id: Date.now(), // 임시 ID
+        id: Date.now(),
         title: formData.title,
         startDate: formData.startDate,
         endDate: formData.endDate,
@@ -316,10 +335,9 @@ function ChallengePage() {
         contents: formData.contents || '',
       };
 
-      // ! 목데이터 사용 중, 백엔드에서 가계부 데이터 수정하는 방식
       setMockAllChallenges((prev) => [...prev, newChallenge]);
       toast.success('챌린지가 성공적으로 생성되었습니다!');
-      handleCloseModal(); // 성공 시에만 모달 닫기
+      handleCloseModal();
     },
     [formData, validateForm, handleCloseModal],
   );
@@ -329,7 +347,7 @@ function ChallengePage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '2fr 1fr', // 열 개수만 설정(2개- 2:1 비율)
+          gridTemplateColumns: '2fr 1fr',
           gap: '20px',
           width: '100%',
           height: '100%',
@@ -366,30 +384,95 @@ function ChallengePage() {
               </div>
 
               <div style={{ marginBottom: '15px' }}>
-                <div style={{ marginBottom: '10px' }}>
+                <div style={{ marginBottom: '15px' }}>
                   <span style={{ fontSize: '16px', fontWeight: 'bold' }}>
                     목표 지출: {currentChallenge.targetAmount.toLocaleString()}원
                   </span>
                 </div>
 
-                {/* 현재 챌린지 게이지바 */}
-                <div
-                  style={{
-                    backgroundColor: '#e0e0e0',
-                    height: '10px',
-                    borderRadius: '5px',
-                    overflow: 'hidden',
-                    marginBottom: '10px',
-                  }}
-                >
+                {/* 기간 진행률 게이지바 */}
+                <div style={{ marginBottom: '20px' }}>
                   <div
                     style={{
-                      backgroundColor: getStatusColor(currentChallenge.status),
-                      height: '100%',
-                      width: `${currentChallenge.gaugeBar}%`,
-                      transition: 'width 0.3s ease',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '8px',
                     }}
-                  ></div>
+                  >
+                    <span style={{ fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                      기간 진행률
+                    </span>
+                    <span style={{ fontSize: '12px', color: '#666' }}>
+                      {currentChallenge.remainingDays > 0
+                        ? `${currentChallenge.remainingDays}일 남음`
+                        : '종료됨'}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      backgroundColor: '#f0f0f0',
+                      height: '8px',
+                      borderRadius: '4px',
+                      overflow: 'hidden',
+                      marginBottom: '5px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        backgroundColor: '#9C27B0',
+                        height: '100%',
+                        width: `${currentChallenge.timeProgress}%`,
+                        transition: 'width 1s ease',
+                      }}
+                    ></div>
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '12px',
+                      color: '#666',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {Math.round(currentChallenge.timeProgress)}% 진행
+                  </div>
+                </div>
+
+                {/* 지출 진행률 게이지바 */}
+                <div style={{ marginBottom: '15px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '8px',
+                    }}
+                  >
+                    <span style={{ fontSize: '14px', fontWeight: '500', color: '#333' }}>
+                      지출 진행률
+                    </span>
+                    <span style={{ fontSize: '12px', color: '#666' }}>
+                      {Math.round(currentChallenge.gaugeBar)}%
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      backgroundColor: '#e0e0e0',
+                      height: '10px',
+                      borderRadius: '5px',
+                      overflow: 'hidden',
+                      marginBottom: '5px',
+                    }}
+                  >
+                    <div
+                      style={{
+                        backgroundColor: getStatusColor(currentChallenge.status),
+                        height: '100%',
+                        width: `${currentChallenge.gaugeBar}%`,
+                        transition: 'width 1s ease',
+                      }}
+                    ></div>
+                  </div>
                 </div>
 
                 <div style={{ marginBottom: '10px' }}>
@@ -412,7 +495,6 @@ function ChallengePage() {
                   원
                 </div>
 
-                {/* 진행중일 때는 상태 출력하지 않음 */}
                 {currentChallenge.status !== challengeStatus.ONGOING && (
                   <div
                     style={{
@@ -523,7 +605,6 @@ function ChallengePage() {
 
         {/* 오른쪽 */}
         <div style={{ width: '100%' }}>
-          {/* 챌린지 추가 모달 버튼 */}
           <button
             onClick={handleOpenModal}
             style={{
@@ -542,7 +623,6 @@ function ChallengePage() {
             + Challenge 추가
           </button>
 
-          {/* 챌린지 성공률 */}
           <div
             style={{
               backgroundColor: '#4CAF50',
@@ -557,7 +637,6 @@ function ChallengePage() {
             <h2 style={{ margin: '0', fontSize: '36px' }}>{successRate}%</h2>
           </div>
 
-          {/* 현재 보유중인 포인트 */}
           <div
             style={{
               backgroundColor: 'white',
@@ -572,7 +651,6 @@ function ChallengePage() {
             <h3 style={{ margin: '0', fontSize: '24px' }}>1,250 P</h3>
           </div>
 
-          {/* 시작 대기중인 챌린지 */}
           <div
             style={{
               backgroundColor: 'white',
@@ -841,7 +919,7 @@ function ChallengePage() {
         </div>
       )}
 
-      {/* ToastContainer - 토스트 메시지가 여기서 나타남 */}
+      {/* ToastContainer */}
       <ToastContainer
         position="top-right"
         autoClose={3000}
