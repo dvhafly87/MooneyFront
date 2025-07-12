@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { toast } from 'react-toastify';
+import { useState, useMemo, useCallback } from 'react';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const challengeStatus = {
   SUCCESS: '성공',
@@ -22,24 +23,28 @@ function ChallengePage() {
     contents: '',
   });
 
-  // Mock 소비 데이터 (백엔드 MOONEY_EXPENSE 테이블에서 가져올 데이터)
-  const mockExpenseData = [
-    { date: '2025-01-01', amount: 50000 },
-    { date: '2025-01-02', amount: 30000 },
-    { date: '2025-01-03', amount: 20000 },
-    { date: '2025-01-04', amount: 45000 },
-    { date: '2025-01-05', amount: 25000 },
-    { date: '2025-01-06', amount: 35000 },
-    { date: '2025-01-07', amount: 40000 },
-    { date: '2025-01-08', amount: 55000 },
-    { date: '2025-01-09', amount: 30000 },
-    { date: '2025-01-10', amount: 70000 },
-    { date: '2024-11-13', amount: 111111 },
-    { date: '2024-12-12', amount: 500001 },
-  ];
+  // Mock 소비 데이터 (날짜 & 소비금액) (백엔드 가계부 테이블에서 가져올 데이터)
+  const mockExpenseData = useMemo(
+    () => [
+      { date: '2025-01-01', amount: 50000 },
+      { date: '2025-01-02', amount: 30000 },
+      { date: '2025-01-03', amount: 20000 },
+      { date: '2025-01-04', amount: 45000 },
+      { date: '2025-01-05', amount: 25000 },
+      { date: '2025-01-06', amount: 35000 },
+      { date: '2025-01-07', amount: 40000 },
+      { date: '2025-01-08', amount: 55000 },
+      { date: '2025-01-09', amount: 30000 },
+      { date: '2025-01-10', amount: 70000 },
+      { date: '2024-11-13', amount: 111111 },
+      { date: '2024-12-12', amount: 500001 },
+    ],
+    [],
+  );
 
-  // 모든 챌린지 데이터 (실제로는 API에서 가져올 데이터)
-  const [allChallenges, setAllChallenges] = useState([
+  // 모든 챌린지 데이터 (실제로는 API 통해 가져올 데이터)
+  // reward를 유저가 직접 선택하는 것은 문제가 될 수 있지 않을까 란 생각은 하고 있음
+  const [mockAllChallenges, setMockAllChallenges] = useState([
     {
       id: 1,
       title: '1월 절약 챌린지',
@@ -88,31 +93,34 @@ function ChallengePage() {
   ]);
 
   // startDate부터 현재(또는 endDate)까지의 지출 합계 계산 (실시간 변경이 가능하게)
-  const calculateCurrentAmount = (startDate, endDate = null) => {
-    const today = new Date();
-    const challengeStartDate = new Date(startDate);
+  // ! 목데이터 사용 중, 백엔드에서 가계부 데이터 전부 가져와야함
+  const calculateCurrentAmount = useCallback(
+    (startDate, endDate = null) => {
+      const today = new Date();
+      const challengeStartDate = new Date(startDate);
 
-    // 시작일이 미래인 경우 → 시작 대기 챌린지로 이동
-    if (challengeStartDate > today) {
-      return 0;
-    }
+      // 시작일이 미래인 경우 → 시작 대기 챌린지로 이동
+      if (challengeStartDate > today) {
+        return 0;
+      }
 
-    const challengeEndDate = endDate ? new Date(endDate) : today;
+      const challengeEndDate = endDate ? new Date(endDate) : today;
 
-    // 계산 기준일 결정 (챌린지가 끝났으면 endDate까지, 진행중이면 오늘까지)
-    const calculationEndDate = challengeEndDate < today ? challengeEndDate : today;
+      // 계산 기준일 결정 (챌린지가 끝났으면 endDate까지, 진행중이면 오늘까지)
+      const calculationEndDate = challengeEndDate < today ? challengeEndDate : today;
 
-    // 목데이터 사용 중, 백엔드에서 가계부 데이터 전부 가져와야함
-    return mockExpenseData
-      .filter((expense) => {
-        const expenseDate = new Date(expense.date);
-        return expenseDate >= challengeStartDate && expenseDate <= calculationEndDate;
-      })
-      .reduce((total, expense) => total + expense.amount, 0);
-  };
+      return mockExpenseData
+        .filter((expense) => {
+          const expenseDate = new Date(expense.date);
+          return expenseDate >= challengeStartDate && expenseDate <= calculationEndDate;
+        })
+        .reduce((total, expense) => total + expense.amount, 0);
+    },
+    [mockExpenseData],
+  );
 
   // 챌린지 상태 계산 함수
-  const calculateChallengeStatus = (challenge, currentAmount) => {
+  const calculateChallengeStatus = useCallback((challenge, currentAmount) => {
     const today = new Date();
     const startDate = new Date(challenge.startDate);
     const endDate = new Date(challenge.endDate);
@@ -134,37 +142,45 @@ function ChallengePage() {
 
     // 3. 진행중 + 목표 미달성 → 진행중
     return challengeStatus.ONGOING;
-  };
+  }, []);
 
   // 모든 챌린지에 currentAmount와 status 추가
-  const challengesWithStatus = allChallenges.map((challenge) => {
-    const currentAmount = calculateCurrentAmount(challenge.startDate, challenge.endDate);
-    const status = calculateChallengeStatus(challenge, currentAmount);
-    const gaugeBar =
-      challenge.targetAmount > 0
-        ? Math.min((currentAmount / challenge.targetAmount) * 100, 100)
-        : 0;
+  // ! 목데이터 사용 중, 백엔드에서 가계부 데이터 전부 가져와야함
+  const challengesWithStatus = useMemo(() => {
+    return mockAllChallenges.map((challenge) => {
+      const currentAmount = calculateCurrentAmount(challenge.startDate, challenge.endDate);
+      const status = calculateChallengeStatus(challenge, currentAmount);
+      const gaugeBar =
+        challenge.targetAmount > 0
+          ? Math.min((currentAmount / challenge.targetAmount) * 100, 100)
+          : 0;
 
-    return {
-      ...challenge,
-      currentAmount,
-      status,
-      gaugeBar,
-    };
-  });
+      return {
+        ...challenge,
+        currentAmount,
+        status,
+        gaugeBar,
+      };
+    });
+  }, [mockAllChallenges, calculateCurrentAmount, calculateChallengeStatus]);
 
   // 상태별로 챌린지 분류
-  const currentChallenge =
-    challengesWithStatus.find((c) => c.status === challengeStatus.ONGOING) || null;
-  const previousChallenges = challengesWithStatus.filter(
-    (c) => c.status === challengeStatus.SUCCESS || c.status === challengeStatus.FAIL,
-  );
-  const pendingChallenges = challengesWithStatus.filter(
-    (c) => c.status === challengeStatus.PENDING,
-  );
+  const { currentChallenge, previousChallenges, pendingChallenges } = useMemo(() => {
+    const current = challengesWithStatus.find((c) => c.status === challengeStatus.ONGOING) || null;
+    const previous = challengesWithStatus.filter(
+      (c) => c.status === challengeStatus.SUCCESS || c.status === challengeStatus.FAIL,
+    );
+    const pending = challengesWithStatus.filter((c) => c.status === challengeStatus.PENDING);
+
+    return {
+      currentChallenge: current,
+      previousChallenges: previous,
+      pendingChallenges: pending,
+    };
+  }, [challengesWithStatus]);
 
   // 전체 챌린지 성공률 계산 (완료된 챌린지만 대상)
-  const calculateSuccessRate = () => {
+  const successRate = useMemo(() => {
     if (previousChallenges.length === 0) return 0;
 
     const successCount = previousChallenges.filter(
@@ -172,11 +188,25 @@ function ChallengePage() {
     ).length;
 
     return Math.round((successCount / previousChallenges.length) * 100);
-  };
+  }, [previousChallenges]);
 
-  const successRate = calculateSuccessRate();
+  // 상태별 배경색 결정
+  const getStatusColor = useCallback((status) => {
+    switch (status) {
+      case challengeStatus.SUCCESS:
+        return '#4CAF50';
+      case challengeStatus.FAIL:
+        return '#ff4444';
+      case challengeStatus.ONGOING:
+        return '#2196F3';
+      case challengeStatus.PENDING:
+        return '#FF9800';
+      default:
+        return '#666';
+    }
+  }, []);
 
-  const handleOpenModal = () => {
+  const handleOpenModal = useCallback(() => {
     console.log('모달 열기 함수');
     setIsModalOpen(true);
     setFormCurrentAmount(0);
@@ -189,9 +219,9 @@ function ChallengePage() {
       reward: '',
       contents: '',
     });
-  };
+  }, []);
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setIsModalOpen(false);
     setFormCurrentAmount(0);
     // 폼 데이터 초기화
@@ -203,28 +233,31 @@ function ChallengePage() {
       reward: '',
       contents: '',
     });
-  };
+  }, []);
 
   // 폼 데이터 변경 핸들러
-  const handleFormChange = (e) => {
+  const handleFormChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
-  };
+  }, []);
 
   // startDate 변경 시 currentAmount 업데이트
-  const handleStartDateChange = (e) => {
-    const selectedStartDate = e.target.value;
-    handleFormChange(e); // 폼 데이터도 업데이트
-    const calculatedAmount = calculateCurrentAmount(selectedStartDate);
-    setFormCurrentAmount(calculatedAmount);
-  };
+  const handleStartDateChange = useCallback(
+    (e) => {
+      const selectedStartDate = e.target.value;
+      handleFormChange(e); // 폼 데이터도 업데이트
+      const calculatedAmount = calculateCurrentAmount(selectedStartDate);
+      setFormCurrentAmount(calculatedAmount);
+    },
+    [handleFormChange, calculateCurrentAmount],
+  );
 
   // 폼 validation 함수
-  const validateForm = (formData) => {
-    const { title, startDate, endDate, targetAmount } = formData;
+  const validateForm = useCallback((formData) => {
+    const { title, startDate, endDate, targetAmount, reward } = formData;
 
     // 필수 필드 체크
     if (!title.trim()) {
@@ -247,74 +280,56 @@ function ChallengePage() {
       return false;
     }
 
-    // 날짜 validation
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-
-    if (end <= start) {
-      toast.error('종료 날짜는 시작 날짜보다 늦어야 합니다.');
+    if (!(reward >= 10 && reward <= 200)) {
+      toast.error('보상 금액은 10포인트 이상 200포인트 이하여야 합니다.');
       return false;
     }
+    // // 날짜 validation
+    // const start = new Date(startDate);
+    // const end = new Date(endDate);
 
-    // // 시작일이 과거인 경우 종료일도 과거여야 함 (이미 끝난 기간의 챌린지)
-    // const today = new Date();
-    // today.setHours(0, 0, 0, 0); // 시간 부분 제거
-
-    // if (start < today && end >= today) {
-    //   toast.error('시작일이 과거인 경우, 종료일도 과거여야 합니다.');
+    // if (end <= start) {
+    //   toast.error('종료 날짜는 시작 날짜보다 늦어야 합니다.');
     //   return false;
     // }
-    // 이 부분은 필요할 것 같지만, 혹시나 하는 생각에 그냥 냅둠
 
     return true;
-  };
+  }, []);
 
-  const handleCreateChallenge = (e) => {
-    e.preventDefault();
+  // 챌린지 추가 모달
+  const handleCreateChallenge = useCallback(
+    (e) => {
+      e.preventDefault();
 
-    // validation 체크
-    if (!validateForm(formData)) {
-      console.log('eeeeeee');
-      return; // validation 실패 시 폼 데이터 유지하고 모달도 유지
-    }
+      // validation 체크
+      if (!validateForm(formData)) {
+        return; // validation 실패 시 폼 데이터 유지하고 모달도 유지
+      }
 
-    const newChallenge = {
-      id: Date.now(), // 임시 ID
-      title: formData.title,
-      startDate: formData.startDate,
-      endDate: formData.endDate,
-      targetAmount: parseInt(formData.targetAmount),
-      reward: parseInt(formData.reward) || 0,
-      contents: formData.contents || '',
-    };
+      const newChallenge = {
+        id: Date.now(), // 임시 ID
+        title: formData.title,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        targetAmount: parseInt(formData.targetAmount),
+        reward: parseInt(formData.reward) || 0,
+        contents: formData.contents || '',
+      };
 
-    setAllChallenges((prev) => [...prev, newChallenge]);
-    toast.success('챌린지가 성공적으로 생성되었습니다!');
-    handleCloseModal(); // 성공 시에만 모달 닫기
-  };
-
-  // 상태별 배경색 결정
-  const getStatusColor = (status) => {
-    switch (status) {
-      case challengeStatus.SUCCESS:
-        return '#4CAF50';
-      case challengeStatus.FAIL:
-        return '#ff4444';
-      case challengeStatus.ONGOING:
-        return '#2196F3';
-      case challengeStatus.PENDING:
-        return '#FF9800';
-      default:
-        return '#666';
-    }
-  };
+      // ! 목데이터 사용 중, 백엔드에서 가계부 데이터 수정하는 방식
+      setMockAllChallenges((prev) => [...prev, newChallenge]);
+      toast.success('챌린지가 성공적으로 생성되었습니다!');
+      handleCloseModal(); // 성공 시에만 모달 닫기
+    },
+    [formData, validateForm, handleCloseModal],
+  );
 
   return (
     <>
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '2fr 1fr',
+          gridTemplateColumns: '2fr 1fr', // 열 개수만 설정(2개- 2:1 비율)
           gap: '20px',
           width: '100%',
           height: '100%',
@@ -825,6 +840,20 @@ function ChallengePage() {
           </div>
         </div>
       )}
+
+      {/* ToastContainer - 토스트 메시지가 여기서 나타남 */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </>
   );
 }
