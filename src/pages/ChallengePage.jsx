@@ -1,3 +1,4 @@
+// src/pages/ChallengePage.jsx
 import { useState, useMemo, useCallback } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -219,22 +220,6 @@ function ChallengePage() {
     return Math.round((successCount / previousChallenges.length) * 100);
   }, [previousChallenges]);
 
-  // 상태별 배경색 결정
-  const getStatusColor = useCallback((status) => {
-    switch (status) {
-      case challengeStatus.SUCCESS:
-        return '#4CAF50';
-      case challengeStatus.FAIL:
-        return '#ff4444';
-      case challengeStatus.ONGOING:
-        return '#2196F3';
-      case challengeStatus.PENDING:
-        return '#FF9800';
-      default:
-        return '#666';
-    }
-  }, []);
-
   const handleOpenModal = useCallback(() => {
     setIsModalOpen(true);
     setFormCurrentAmount(0);
@@ -341,6 +326,22 @@ function ChallengePage() {
     },
     [formData, validateForm, handleCloseModal],
   );
+
+  // 상태별 배경색 결정
+  const getStatusColor = useCallback((status) => {
+    switch (status) {
+      case challengeStatus.SUCCESS:
+        return '#4CAF50';
+      case challengeStatus.FAIL:
+        return '#ff4444';
+      case challengeStatus.ONGOING:
+        return '#2196F3';
+      case challengeStatus.PENDING:
+        return '#FF9800';
+      default:
+        return '#666';
+    }
+  }, []);
 
   return (
     <>
