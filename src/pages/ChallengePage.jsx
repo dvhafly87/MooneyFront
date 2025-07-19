@@ -1,7 +1,7 @@
 // src/pages/ChallengePage.jsx
 import { useState, useMemo, useCallback } from 'react';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { showError, showSuccess } from '../utils/toast';
+import S from '../styles/challengePage.style';
 
 const challengeStatus = {
   SUCCESS: '성공',
@@ -268,36 +268,29 @@ function ChallengePage() {
     const { title, startDate, endDate, targetAmount, reward } = formData;
 
     if (!title.trim()) {
-      toast.error('챌린지 이름을 입력해주세요.');
+      showError('챌린지 이름을 입력해주세요.');
       return false;
     }
 
     if (!startDate) {
-      toast.error('시작 날짜를 선택해주세요.');
+      showError('시작 날짜를 선택해주세요.');
       return false;
     }
 
     if (!endDate) {
-      toast.error('종료 날짜를 선택해주세요.');
+      showError('종료 날짜를 선택해주세요.');
       return false;
     }
 
     if (!targetAmount || parseInt(targetAmount) <= 0) {
-      toast.error('목표 금액을 올바르게 입력해주세요.');
+      showError('목표 금액을 올바르게 입력해주세요.');
       return false;
     }
 
-    if (!(reward >= 10 && reward <= 200)) {
-      toast.error('보상 포인트는 최소 10포인트, 최대 200포인트입니다.');
+    if (reward && (reward < 10 || reward > 200)) {
+      showError('보상 포인트는 최소 10포인트, 최대 200포인트입니다.');
       return false;
     }
-    // const start = new Date(startDate);
-    // const end = new Date(endDate);
-
-    // if (end <= start) {
-    //   toast.error('종료 날짜는 시작 날짜보다 늦어야 합니다.');
-    //   return false;
-    // }
 
     return true;
   }, []);
@@ -321,7 +314,12 @@ function ChallengePage() {
       };
 
       setMockAllChallenges((prev) => [...prev, newChallenge]);
-      toast.success('챌린지가 성공적으로 생성되었습니다!');
+
+      // 성공 메시지 with 커스텀 옵션
+      showSuccess('🎉 챌린지가 성공적으로 생성되었습니다!', {
+        autoClose: 4000,
+      });
+
       handleCloseModal();
     },
     [formData, validateForm, handleCloseModal],
@@ -344,596 +342,245 @@ function ChallengePage() {
   }, []);
 
   return (
-    <>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '2fr 1fr',
-          gap: '20px',
-          width: '100%',
-          height: '100%',
-          padding: '20px',
-        }}
-      >
-        {/* 왼쪽 */}
-        <div style={{ width: '100%' }}>
-          {/* 현재 진행중인 챌린지 카드 */}
-          {currentChallenge ? (
-            <div
-              style={{
-                backgroundColor: 'white',
-                borderRadius: '15px',
-                padding: '25px',
-                marginBottom: '20px',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-              }}
+    <S.PageContainer>
+      {/* 왼쪽 */}
+      <S.LeftColumn>
+        {/* 현재 진행중인 챌린지 카드 */}
+        {currentChallenge ? (
+          <S.Card>
+            <S.SectionTitle>나의 챌린지</S.SectionTitle>
+            <S.ChallengeHeader>
+              <S.ChallengeTitle>{currentChallenge.title}</S.ChallengeTitle>
+              <S.ChallengeDateRange>
+                {currentChallenge.startDate} ~ {currentChallenge.endDate}
+              </S.ChallengeDateRange>
+            </S.ChallengeHeader>
+
+            <S.TargetAmount>
+              목표 지출: {currentChallenge.targetAmount.toLocaleString()}원
+            </S.TargetAmount>
+
+            {/* 기간 진행률 게이지바 */}
+            <S.GaugeContainer marginBottom="20px">
+              <S.GaugeHeader>
+                <S.GaugeLabel>기간 진행률</S.GaugeLabel>
+                <S.GaugeValue>
+                  {currentChallenge.remainingDays > 0
+                    ? `${currentChallenge.remainingDays}일 남음`
+                    : '종료됨'}
+                </S.GaugeValue>
+              </S.GaugeHeader>
+              <S.GaugeBar bgColor="#f0f0f0" height="8px">
+                <S.GaugeFill fillColor="#9C27B0" width={currentChallenge.timeProgress} />
+              </S.GaugeBar>
+              <S.GaugeText>{Math.round(currentChallenge.timeProgress)}% 진행</S.GaugeText>
+            </S.GaugeContainer>
+
+            {/* 지출 진행률 게이지바 */}
+            <S.GaugeContainer>
+              <S.GaugeHeader>
+                <S.GaugeLabel>지출 진행률</S.GaugeLabel>
+                <S.GaugeValue>{Math.round(currentChallenge.gaugeBar)}%</S.GaugeValue>
+              </S.GaugeHeader>
+              <S.GaugeBar>
+                <S.GaugeFill
+                  fillColor={getStatusColor(currentChallenge.status)}
+                  width={currentChallenge.gaugeBar}
+                />
+              </S.GaugeBar>
+            </S.GaugeContainer>
+
+            <S.AmountDisplay>
+              현재 지출: {currentChallenge.currentAmount.toLocaleString()}원
+            </S.AmountDisplay>
+
+            <S.AmountDisplay
+              fontWeight="bold"
+              color={
+                currentChallenge.targetAmount - currentChallenge.currentAmount >= 0
+                  ? '#4CAF50'
+                  : '#ff4444'
+              }
             >
-              <h2 style={{ margin: '0 0 15px 0' }}>나의 챌린지</h2>
-              <div
-                style={{
-                  backgroundColor: '#4A90E2',
-                  color: 'white',
-                  padding: '15px',
-                  borderRadius: '10px',
-                  marginBottom: '20px',
-                }}
-              >
-                <h3 style={{ margin: '0 0 5px 0' }}>{currentChallenge.title}</h3>
-                <span>
-                  {currentChallenge.startDate} ~ {currentChallenge.endDate}
-                </span>
-              </div>
+              목표까지 남은 지출:{' '}
+              {(currentChallenge.targetAmount - currentChallenge.currentAmount).toLocaleString()}원
+            </S.AmountDisplay>
 
-              <div style={{ marginBottom: '15px' }}>
-                <div style={{ marginBottom: '15px' }}>
-                  <span style={{ fontSize: '16px', fontWeight: 'bold' }}>
-                    목표 지출: {currentChallenge.targetAmount.toLocaleString()}원
-                  </span>
-                </div>
+            {currentChallenge.status !== challengeStatus.ONGOING && (
+              <S.StatusBadge bgColor={getStatusColor(currentChallenge.status)}>
+                {currentChallenge.status}
+              </S.StatusBadge>
+            )}
+          </S.Card>
+        ) : (
+          <S.Card center>
+            <S.SectionTitle>나의 챌린지</S.SectionTitle>
+            <p>현재 진행중인 챌린지가 없습니다.</p>
+            <p>새로운 챌린지를 만들어보세요!</p>
+          </S.Card>
+        )}
 
-                {/* 기간 진행률 게이지바 */}
-                <div style={{ marginBottom: '20px' }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: '8px',
-                    }}
-                  >
-                    <span style={{ fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                      기간 진행률
-                    </span>
-                    <span style={{ fontSize: '12px', color: '#666' }}>
-                      {currentChallenge.remainingDays > 0
-                        ? `${currentChallenge.remainingDays}일 남음`
-                        : '종료됨'}
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      backgroundColor: '#f0f0f0',
-                      height: '8px',
-                      borderRadius: '4px',
-                      overflow: 'hidden',
-                      marginBottom: '5px',
-                    }}
-                  >
-                    <div
-                      style={{
-                        backgroundColor: '#9C27B0',
-                        height: '100%',
-                        width: `${currentChallenge.timeProgress}%`,
-                        transition: 'width 1s ease',
-                      }}
-                    ></div>
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '12px',
-                      color: '#666',
-                      textAlign: 'center',
-                    }}
-                  >
-                    {Math.round(currentChallenge.timeProgress)}% 진행
-                  </div>
-                </div>
-
-                {/* 지출 진행률 게이지바 */}
-                <div style={{ marginBottom: '15px' }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: '8px',
-                    }}
-                  >
-                    <span style={{ fontSize: '14px', fontWeight: '500', color: '#333' }}>
-                      지출 진행률
-                    </span>
-                    <span style={{ fontSize: '12px', color: '#666' }}>
-                      {Math.round(currentChallenge.gaugeBar)}%
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      backgroundColor: '#e0e0e0',
-                      height: '10px',
-                      borderRadius: '5px',
-                      overflow: 'hidden',
-                      marginBottom: '5px',
-                    }}
-                  >
-                    <div
-                      style={{
-                        backgroundColor: getStatusColor(currentChallenge.status),
-                        height: '100%',
-                        width: `${currentChallenge.gaugeBar}%`,
-                        transition: 'width 1s ease',
-                      }}
-                    ></div>
-                  </div>
-                </div>
-
-                <div style={{ marginBottom: '10px' }}>
-                  <span>현재 지출: {currentChallenge.currentAmount.toLocaleString()}원</span>
-                </div>
-
-                <div
-                  style={{
-                    color:
-                      currentChallenge.targetAmount - currentChallenge.currentAmount >= 0
-                        ? '#4CAF50'
-                        : '#ff4444',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  목표까지 남은 지출:{' '}
-                  {(
-                    currentChallenge.targetAmount - currentChallenge.currentAmount
-                  ).toLocaleString()}
-                  원
-                </div>
-
-                {currentChallenge.status !== challengeStatus.ONGOING && (
-                  <div
-                    style={{
-                      marginTop: '10px',
-                      padding: '5px 10px',
-                      backgroundColor: getStatusColor(currentChallenge.status),
-                      color: 'white',
-                      borderRadius: '5px',
-                      display: 'inline-block',
-                    }}
-                  >
-                    {currentChallenge.status}
-                  </div>
-                )}
-              </div>
-            </div>
+        {/* 이전 진행 챌린지 */}
+        <S.Card>
+          <S.SubSectionTitle>지금까지 진행한 챌린지</S.SubSectionTitle>
+          {previousChallenges.length > 0 ? (
+            previousChallenges.map((item) => (
+              <S.PreviousChallengeItem key={item.id}>
+                <S.PreviousChallengeHeader>
+                  <S.PreviousChallengeTitle>{item.title}</S.PreviousChallengeTitle>
+                  <S.StatusBadge bgColor={getStatusColor(item.status)}>{item.status}</S.StatusBadge>
+                </S.PreviousChallengeHeader>
+                <S.PreviousChallengeDateRange>
+                  {item.startDate} ~ {item.endDate}
+                </S.PreviousChallengeDateRange>
+                <S.GaugeBar height="6px">
+                  <S.GaugeFill
+                    fillColor={getStatusColor(item.status)}
+                    width={Math.min(item.gaugeBar, 100)}
+                  />
+                </S.GaugeBar>
+                <S.PreviousChallengeDetails>
+                  사용 금액: {item.currentAmount.toLocaleString()} /{' '}
+                  {item.targetAmount.toLocaleString()}원 ({Math.round(item.gaugeBar)}%)
+                </S.PreviousChallengeDetails>
+              </S.PreviousChallengeItem>
+            ))
           ) : (
-            <div
-              style={{
-                backgroundColor: 'white',
-                borderRadius: '15px',
-                padding: '25px',
-                marginBottom: '20px',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-                textAlign: 'center',
-                color: '#666',
-              }}
-            >
-              <h2 style={{ margin: '0 0 15px 0' }}>나의 챌린지</h2>
-              <p>현재 진행중인 챌린지가 없습니다.</p>
-              <p>새로운 챌린지를 만들어보세요!</p>
-            </div>
+            <S.EmptyState>완료된 챌린지가 없습니다.</S.EmptyState>
           )}
+        </S.Card>
+      </S.LeftColumn>
 
-          {/* 이전 진행 챌린지 */}
-          <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '15px',
-              padding: '25px',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-            }}
-          >
-            <h3 style={{ margin: '0 0 20px 0' }}>지금까지 진행한 챌린지</h3>
-            {previousChallenges.length > 0 ? (
-              previousChallenges.map((item) => (
-                <div
-                  key={item.id}
-                  style={{
-                    padding: '15px',
-                    border: '1px solid #e0e0e0',
-                    borderRadius: '8px',
-                    marginBottom: '15px',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: '8px',
-                    }}
-                  >
-                    <h4 style={{ margin: '0', fontSize: '16px' }}>{item.title}</h4>
-                    <span
-                      style={{
-                        backgroundColor: getStatusColor(item.status),
-                        color: 'white',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        fontSize: '12px',
-                      }}
-                    >
-                      {item.status}
-                    </span>
-                  </div>
-                  <p style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#666' }}>
-                    {item.startDate} ~ {item.endDate}
-                  </p>
-                  <div
-                    style={{
-                      backgroundColor: '#e0e0e0',
-                      height: '6px',
-                      borderRadius: '3px',
-                      overflow: 'hidden',
-                      marginBottom: '8px',
-                    }}
-                  >
-                    <div
-                      style={{
-                        backgroundColor: getStatusColor(item.status),
-                        height: '100%',
-                        width: `${Math.min(item.gaugeBar, 100)}%`,
-                      }}
-                    ></div>
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#666' }}>
-                    사용 금액: {item.currentAmount.toLocaleString()} /{' '}
-                    {item.targetAmount.toLocaleString()}원 ({Math.round(item.gaugeBar)}%)
-                  </div>
-                </div>
-              ))
-            ) : (
-              <p style={{ margin: '0', color: '#666' }}>완료된 챌린지가 없습니다.</p>
-            )}
-          </div>
-        </div>
+      {/* 오른쪽 */}
+      <S.RightColumn>
+        <S.AddButton onClick={handleOpenModal}>+ Challenge 추가</S.AddButton>
 
-        {/* 오른쪽 */}
-        <div style={{ width: '100%' }}>
-          <button
-            onClick={handleOpenModal}
-            style={{
-              width: '100%',
-              backgroundColor: '#4A90E2',
-              color: 'white',
-              border: 'none',
-              borderRadius: '10px',
-              padding: '15px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              marginBottom: '20px',
-            }}
-          >
-            + Challenge 추가
-          </button>
+        <S.SuccessRateCard>
+          <p style={{ margin: '0 0 10px 0' }}>챌린지 성공률</p>
+          <S.SuccessRateValue>{successRate}%</S.SuccessRateValue>
+        </S.SuccessRateCard>
 
-          <div
-            style={{
-              backgroundColor: '#4CAF50',
-              color: 'white',
-              borderRadius: '15px',
-              padding: '25px',
-              textAlign: 'center',
-              marginBottom: '20px',
-            }}
-          >
-            <p style={{ margin: '0 0 10px 0' }}>챌린지 성공률</p>
-            <h2 style={{ margin: '0', fontSize: '36px' }}>{successRate}%</h2>
-          </div>
+        <S.PointsCard>
+          <S.PointsLabel>현재 보유중인 포인트</S.PointsLabel>
+          <S.PointsValue>1,250 P</S.PointsValue>
+        </S.PointsCard>
 
-          <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '15px',
-              padding: '25px',
-              textAlign: 'center',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-              marginBottom: '20px',
-            }}
-          >
-            <p style={{ margin: '0 0 10px 0', color: '#666' }}>현재 보유중인 포인트</p>
-            <h3 style={{ margin: '0', fontSize: '24px' }}>1,250 P</h3>
-          </div>
-
-          <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '15px',
-              padding: '25px',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-            }}
-          >
-            <h3 style={{ margin: '0 0 15px 0', fontSize: '18px' }}>시작 대기 중인 챌린지</h3>
-            {pendingChallenges.length > 0 ? (
-              pendingChallenges.map((challenge) => (
-                <div
-                  key={challenge.id}
-                  style={{
-                    padding: '12px',
-                    border: '2px solid #FF9800',
-                    borderRadius: '6px',
-                    marginBottom: '10px',
-                    backgroundColor: '#FFF3E0',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      marginBottom: '5px',
-                    }}
-                  >
-                    <h4 style={{ margin: '0', fontSize: '14px' }}>{challenge.title}</h4>
-                    <span
-                      style={{
-                        backgroundColor: '#FF9800',
-                        color: 'white',
-                        padding: '2px 6px',
-                        borderRadius: '3px',
-                        fontSize: '10px',
-                      }}
-                    >
-                      {challenge.status}
-                    </span>
-                  </div>
-                  <p style={{ margin: '0 0 5px 0', fontSize: '12px', color: '#666' }}>
-                    {challenge.startDate} ~ {challenge.endDate}
-                  </p>
-                  <p style={{ margin: '0', fontSize: '12px', color: '#666' }}>
-                    목표: {challenge.targetAmount.toLocaleString()}원
-                  </p>
-                </div>
-              ))
-            ) : (
-              <p style={{ margin: '0', color: '#666', fontSize: '14px' }}>
-                대기 중인 챌린지가 없습니다.
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
+        <S.Card>
+          <S.SubSectionTitle>시작 대기 중인 챌린지</S.SubSectionTitle>
+          {pendingChallenges.length > 0 ? (
+            pendingChallenges.map((challenge) => (
+              <S.PendingChallengeItem key={challenge.id}>
+                <S.PendingChallengeHeader>
+                  <S.PendingChallengeTitle>{challenge.title}</S.PendingChallengeTitle>
+                  <S.StatusBadge bgColor="#FF9800">{challenge.status}</S.StatusBadge>
+                </S.PendingChallengeHeader>
+                <S.PendingChallengeInfo>
+                  {challenge.startDate} ~ {challenge.endDate}
+                </S.PendingChallengeInfo>
+                <S.PendingChallengeInfo>
+                  목표: {challenge.targetAmount.toLocaleString()}원
+                </S.PendingChallengeInfo>
+              </S.PendingChallengeItem>
+            ))
+          ) : (
+            <S.EmptyState>대기 중인 챌린지가 없습니다.</S.EmptyState>
+          )}
+        </S.Card>
+      </S.RightColumn>
 
       {/* 모달창 */}
       {isModalOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 1000,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '15px',
-              padding: '30px',
-              width: '450px',
-              maxWidth: '90vw',
-            }}
-          >
-            <h2 style={{ margin: '0 0 20px 0' }}>Challenge 추가</h2>
+        <S.ModalOverlay>
+          <S.ModalContent>
+            <S.ModalTitle>Challenge 추가</S.ModalTitle>
             <form onSubmit={handleCreateChallenge}>
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                  챌린지 이름
-                </label>
-                <input
+              <S.FormGroup>
+                <S.Label>챌린지 이름</S.Label>
+                <S.Input
                   type="text"
                   name="title"
                   value={formData.title}
                   onChange={handleFormChange}
                   required
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #ddd',
-                    borderRadius: '5px',
-                    boxSizing: 'border-box',
-                  }}
                 />
-              </div>
+              </S.FormGroup>
 
-              <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
-                <div style={{ flex: 1 }}>
-                  <label
-                    htmlFor="startDate"
-                    style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}
-                  >
-                    시작 날짜
-                  </label>
-                  <input
+              <S.FormRow>
+                <S.FormColumn>
+                  <S.Label htmlFor="startDate">시작 날짜</S.Label>
+                  <S.Input
                     type="date"
                     name="startDate"
                     id="startDate"
                     value={formData.startDate}
                     onChange={handleStartDateChange}
                     required
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      border: '1px solid #ddd',
-                      borderRadius: '5px',
-                      boxSizing: 'border-box',
-                    }}
                   />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label
-                    htmlFor="endDate"
-                    style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}
-                  >
-                    종료 날짜
-                  </label>
-                  <input
+                </S.FormColumn>
+                <S.FormColumn>
+                  <S.Label htmlFor="endDate">종료 날짜</S.Label>
+                  <S.Input
                     type="date"
                     name="endDate"
                     id="endDate"
                     value={formData.endDate}
                     onChange={handleFormChange}
                     required
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      border: '1px solid #ddd',
-                      borderRadius: '5px',
-                      boxSizing: 'border-box',
-                    }}
                   />
-                </div>
-              </div>
+                </S.FormColumn>
+              </S.FormRow>
 
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                  목표 금액 (원)
-                </label>
-                <input
+              <S.FormGroup>
+                <S.Label>목표 금액 (원)</S.Label>
+                <S.Input
                   type="number"
                   name="targetAmount"
                   value={formData.targetAmount}
                   onChange={handleFormChange}
                   required
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #ddd',
-                    borderRadius: '5px',
-                    boxSizing: 'border-box',
-                  }}
                 />
-              </div>
+              </S.FormGroup>
 
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                  보상 포인트
-                </label>
-                <input
+              <S.FormGroup>
+                <S.Label>보상 포인트</S.Label>
+                <S.Input
                   type="number"
                   name="reward"
                   value={formData.reward}
                   onChange={handleFormChange}
                   placeholder="선택사항"
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #ddd',
-                    borderRadius: '5px',
-                    boxSizing: 'border-box',
-                  }}
                 />
-              </div>
+              </S.FormGroup>
 
-              <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                  챌린지 설명
-                </label>
-                <textarea
+              <S.FormGroup>
+                <S.Label>챌린지 설명</S.Label>
+                <S.TextArea
                   name="contents"
                   value={formData.contents}
                   onChange={handleFormChange}
                   placeholder="선택사항"
                   rows="3"
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    border: '1px solid #ddd',
-                    borderRadius: '5px',
-                    boxSizing: 'border-box',
-                    resize: 'vertical',
-                  }}
                 />
-              </div>
+              </S.FormGroup>
 
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                  현재 소비 금액
-                </label>
-                <p
-                  style={{
-                    margin: '0',
-                    padding: '10px',
-                    backgroundColor: '#f5f5f5',
-                    borderRadius: '5px',
-                    color: '#666',
-                  }}
-                >
+              <S.FormGroup>
+                <S.Label>현재 소비 금액</S.Label>
+                <S.CurrentAmountDisplay>
                   {formCurrentAmount.toLocaleString()}원
-                </p>
-              </div>
+                </S.CurrentAmountDisplay>
+              </S.FormGroup>
 
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  type="submit"
-                  style={{
-                    flex: 1,
-                    padding: '12px',
-                    backgroundColor: '#4A90E2',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  생성
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  style={{
-                    flex: 1,
-                    padding: '12px',
-                    backgroundColor: '#f0f0f0',
-                    border: 'none',
-                    borderRadius: '5px',
-                    cursor: 'pointer',
-                  }}
-                >
+              <S.ButtonRow>
+                <S.SubmitButton type="submit">생성</S.SubmitButton>
+                <S.CancelButton type="button" onClick={handleCloseModal}>
                   취소
-                </button>
-              </div>
+                </S.CancelButton>
+              </S.ButtonRow>
             </form>
-          </div>
-        </div>
+          </S.ModalContent>
+        </S.ModalOverlay>
       )}
-
-      {/* ToastContainer */}
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-      />
-    </>
+    </S.PageContainer>
   );
 }
 
