@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import Sidebar from '@components/Sidebar';
-import MenuIcon from '@img/Menu_Icon.png';
+import Sidebar from '../components/Sidebar';
+import MenuIcon from '../img/Menu_Icon.png';
 
 function Layout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -59,7 +59,6 @@ function Layout({ children }) {
           cursor: 'pointer',
         }}
       />
-
       {/* 사이드바 */}
       <Sidebar
         isOpen={isSidebarOpen}

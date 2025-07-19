@@ -1,0 +1,215 @@
+/* ✅ Mooney 메인 페이지와 통일된 DiaryPage 스타일 */
+
+body {
+  background: #f8f9fa;
+  font-family: 'Noto Sans KR', sans-serif;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+}
+
+.diary-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 40px;
+  padding: 100px 40px 40px;
+  box-sizing: border-box;
+  flex-wrap: nowrap;
+  height: calc(100vh - 140px);
+}
+
+.left-panel, .right-panel {
+  width: 48%;
+  display: flex;
+  flex-direction: column;
+}
+
+.left-panel {
+  justify-content: flex-start;
+  height: 100%;
+}
+
+.right-panel {
+  height: 100%;
+}
+
+.today-phrase {
+  font-size: 18px;
+  color: #49627c;
+  font-family: 'Nanum Pen Script', cursive;
+  margin-bottom: -12px;
+}
+
+.header-row h2 {
+  font-size: 22px;
+  font-weight: bold;
+  background: #e1ecf4;
+  padding: 12px 20px;
+  border-radius: 12px;
+  color: #2e3d55;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background 0.2s ease;
+}
+
+.header-row h2:hover {
+  background: #d1dfeb;
+}
+
+.diary-img {
+  height: 48px;
+  width: auto;
+}
+
+.diary-calendar-wrapper {
+  position: relative;
+}
+
+.diary-calendar-popup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  background-color: #fff;
+  border: 1px solid #cfd9e3;
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.diary-calendar-popup .react-calendar {
+  border: none;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 16px;
+  background-color: transparent;
+}
+
+.diary-calendar-popup .react-calendar__tile--active {
+  background: #6c8cc6 !important;
+  color: white;
+  border-radius: 10px;
+}
+
+.diary-calendar-popup .react-calendar__tile--now {
+  background: #dce6f4;
+  font-weight: bold;
+}
+
+.summary-box {
+  background: #ffffff;
+  border: 1px solid #dbe2ea;
+  border-radius: 20px;
+  padding: 25px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.03);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.summary-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #2f415e;
+}
+
+.income {
+  color: #2962ff;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.expense {
+  color: #e53935;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.chart-wrapper {
+  margin-top: 15px;
+  flex-grow: 1;
+}
+
+.diary-box {
+  background: #ffffff;
+  border: 1px solid #dbe2ea;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.03);
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.diary-box h2 {
+  font-size: 26px;
+  font-family: 'Nanum Pen Script', cursive;
+  text-align: center;
+  color: #37485c;
+  margin-bottom: 20px;
+}
+
+.lined-paper {
+  background-image: repeating-linear-gradient(#ffffff, #ffffff 24px, #f0f4f8 25px);
+  border-radius: 12px;
+  padding: 15px 20px;
+  flex: 1;
+  overflow-y: auto;
+  font-size: 18px;
+  font-family: 'Nanum Pen Script', cursive;
+  color: #333;
+  line-height: 1.9;
+  display: flex;
+  flex-direction: column;
+}
+
+.paper-line {
+  padding: 0 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.diary-box textarea {
+  height: 300px;
+  padding: 20px;
+  font-size: 16px;
+  border-radius: 12px;
+  border: 1px solid #ccd7e3;
+  background: #ffffff;
+  font-family: 'Nanum Gothic', sans-serif;
+  line-height: 1.8;
+  color: #333;
+  resize: none;
+}
+
+.diary-box button {
+  margin-top: 15px;
+  padding: 10px 20px;
+  border: none;
+  background: #6c8cc6;
+  color: white;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  align-self: flex-end;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  transition: background 0.2s ease;
+}
+
+.diary-box button:hover {
+  background: #4b6fae;
+}
+
+.empty-msg {
+  color: #999;
+  font-size: 14px;
+  font-family: 'Nanum Gothic', sans-serif;
+  margin-top: 10px;
+}
