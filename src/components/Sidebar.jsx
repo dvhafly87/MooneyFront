@@ -1,17 +1,17 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ROUTES } from '@route/routes.js';
+import { ROUTES } from '../route/routes.js';
 import { useState } from 'react';
-import NotificationPanel from '@components/NotificationPanel';
-import mainImg from '@img/main.png';
-import diaryIcon from '@img/book.png';
-import wonImg from '@img/won.png';
-import offBellImg from '@img/off_bell.png';
-import onBellImg from '@img/on_bell.png';
-import pencilImg from '@img/pencil.png';
-import chaImg from '@img/challenge.png';
-import mypageImg from '@img/mypage.png';
-import loginIcon from '@img/login.png';
-import logoutIcon from '@img/logout.png';
+import useAuth from '../contexts/useAuth.jsx';
+import NotificationPanel from '../components/NotificationPanel';
+import mainImg from '../img/main.png';
+import diaryIcon from '../img/book.png';
+import wonImg from '../img/won.png';
+import offBellImg from '../img/off_bell.png';
+import onBellImg from '../img/on_bell.png';
+import pencilImg from '../img/pencil.png';
+import chaImg from '../img/challenge.png';
+import mypageImg from '../img/mypage.png';
+import logoutIcon from '../img/logout.png';
 
 const Sidebar = ({
   isOpen,
@@ -22,22 +22,26 @@ const Sidebar = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-
-  const [isLogin, setIsLogin] = useState(false);
+  const { user, logout, checkTokenExpiry } = useAuth(); // 인증 상태 가져오기
 
   const [hasNotification, setHasNotification] = useState(true);
 
   const sidebarMenu = [
-    // 알림(모달), 전체지출, 챌린지, 다이어리, 가계부 적기
-    // !전체 지출과 가계부 적기 path를 동일하게 두었음 수정해야 함 (가계부 모달 창으로 바로 간다던지 그런 식으로)
+    // 알림(모달), 전체지출, 챌린지, 다이어리, 구독
+    //! 전체 지출과 가계부 적기 path를 동일하게 두었음 수정해야 함 (가계부 모달 창으로 바로 간다던지 그런 식으로)-구독으로 수정하긴 했는데, 필요한면 바꿀 것
     { id: 'notify', label: '알림', icon: hasNotification ? onBellImg : offBellImg },
     { id: 'allExpense', label: '전체수입지출', icon: wonImg, path: ROUTES.ACCOUNT_BOOK },
     { id: 'challenge', label: '챌린지', icon: chaImg, path: ROUTES.CHALLENGE },
     { id: 'diary', label: '다이어리', icon: diaryIcon, path: ROUTES.DIARY },
-    { id: 'accountBook', label: '가계부 적기', icon: pencilImg, path: ROUTES.ACCOUNT_BOOK },
+    { id: 'subscription', label: '구독', icon: pencilImg, path: ROUTES.SUBSCRIPTION },
   ];
 
   const handleMenuClick = (path, itemId) => {
+    // 메뉴 클릭 시 토큰 체크
+    if (!checkTokenExpiry()) {
+      return; // 토큰이 만료되면 ProtectedRoute에서 자동 처리
+    }
+
     if (itemId === 'notify') {
       onOpenNotification();
     } else if (path) {
@@ -46,15 +50,22 @@ const Sidebar = ({
   };
 
   const handleRootClick = () => {
-    navigate(ROUTES.ROOT);
+    if (checkTokenExpiry()) {
+      navigate(ROUTES.ROOT);
+    }
   };
 
   const handleUserClick = () => {
-    navigate(ROUTES.USER);
+    if (checkTokenExpiry()) {
+      navigate(ROUTES.USER);
+    }
   };
 
   const handleLogout = () => {
-    navigate(ROUTES.LOGIN);
+    if (window.confirm('정말 로그아웃하시겠습니까?')) {
+      logout();
+      navigate(ROUTES.LOGIN);
+    }
   };
 
   return (
@@ -95,14 +106,11 @@ const Sidebar = ({
           </div>
 
           <p style={{ margin: 0, fontSize: '14px', textAlign: 'center' }}>
-            {isLogin ? (
-              <>
-                Welcome,&nbsp;
-                <span style={{ color: '#6B69EE' }}>{userId}</span>님!
-              </>
-            ) : (
-              '로그인을 먼저 해주세요!'
-            )}
+            Welcome,&nbsp;
+            <span style={{ color: '#6B69EE' }}>
+              {user?.name || user?.nickname || user?.id || '사용자'}
+            </span>
+            님!
           </p>
 
           {/* 메뉴 리스트 */}
@@ -220,20 +228,19 @@ const Sidebar = ({
             }}
           >
             <img
-              src={isLogin ? logoutIcon : loginIcon}
-              alt={isLogin ? 'Logout' : 'Login'}
+              src={logoutIcon}
+              alt="Logout"
               style={{
                 width: '18px',
                 height: '18px',
               }}
             />
-            {isLogin ? 'Logout' : 'Login'}
+            Logout
           </div>
         </div>
       </div>
 
-      {/* 알림창 - 기존 기능 유지 */}
-
+      {/* 알림창*/}
       {isNotificationPanelOpen && (
         <NotificationPanel onClose={onCloseNotification} notificationRef={notificationRef} />
       )}
