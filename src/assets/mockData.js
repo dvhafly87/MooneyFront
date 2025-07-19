@@ -1,3 +1,4 @@
+// src/assets/mockData.js
 import { FaBell, FaBookOpen, FaTrophy, FaWallet } from 'react-icons/fa';
 import { ROUTES } from '../route/routes';
 
@@ -84,31 +85,33 @@ const mockUserData = [
   },
 ];
 
+// 추가로 필요한 카테고리들도 함께 업데이트
 const mockCategory = [
   { mcatId: 1, mcatName: '엔터테인먼트', mcatColor: '#FF6384' },
   { mcatId: 2, mcatName: '업무/생산성', mcatColor: '#36A2EB' },
   { mcatId: 3, mcatName: '클라우드 저장소', mcatColor: '#FFCE56' },
   { mcatId: 4, mcatName: '쇼핑', mcatColor: '#8BC34A' },
   { mcatId: 5, mcatName: '기타', mcatColor: '#9C27B0' },
+  { mcatId: 6, mcatName: '식비', mcatColor: '#FF9F40' },
+  { mcatId: 7, mcatName: '교통비', mcatColor: '#4BC0C0' },
+  { mcatId: 8, mcatName: '통신비', mcatColor: '#9966FF' },
+  { mcatId: 9, mcatName: '건강/의료', mcatColor: '#FF6B6B' },
+  { mcatId: 10, mcatName: '교육', mcatColor: '#4ECDC4' },
 ];
 
 const mockExpenseData = [
-  // === 구독 예정 (PENDING) ===
-
-  // mcatId로 카테고리의 데이터를 사용하도록
+  // === 구독 예정 (PENDING) - 현재 달 예정 ===
   {
     mexpId: 1,
     mexpMmemId: 'user001',
-    mexpDt: null, // 아직 지출 안함
+    mexpDt: null,
     mexpAmt: 17000,
     mexpDec: 'Netflix 구독료',
     mexpType: 'E',
-    mexpRpt: 'T', // 반복 지출
-    mexpRptdd: '2025-07-25', // 지출해야 할 날짜
+    mexpRpt: 'T',
+    mexpRptdd: '2025-07-25',
     mexpStatus: 'PENDING',
-    mcatId: 1,
-    // categoryName: '엔터테인먼트',
-    // categoryColor: '#FF6384',
+    mcatId: 1, // 엔터테인먼트
   },
   {
     mexpId: 2,
@@ -120,9 +123,7 @@ const mockExpenseData = [
     mexpRpt: 'T',
     mexpRptdd: '2025-07-28',
     mexpStatus: 'PENDING',
-    mcatId: 1,
-    // categoryName: '엔터테인먼트',
-    // categoryColor: '#FF6384',
+    mcatId: 1, // 엔터테인먼트
   },
   {
     mexpId: 3,
@@ -132,11 +133,9 @@ const mockExpenseData = [
     mexpDec: 'Adobe Creative Cloud',
     mexpType: 'E',
     mexpRpt: 'T',
-    mexpRptdd: '2025-08-15', // 한달 넘음
+    mexpRptdd: '2025-08-15',
     mexpStatus: 'PENDING',
-    mcatId: 2,
-    // categoryName: '업무/생산성',
-    // categoryColor: '#36A2EB',
+    mcatId: 2, // 업무/생산성
   },
   {
     mexpId: 4,
@@ -148,9 +147,7 @@ const mockExpenseData = [
     mexpRpt: 'T',
     mexpRptdd: '2025-08-01',
     mexpStatus: 'PENDING',
-    mcatId: 3,
-    // categoryName: '클라우드 저장소',
-    // categoryColor: '#FFCE56',
+    mcatId: 3, // 클라우드 저장소
   },
   {
     mexpId: 5,
@@ -160,38 +157,133 @@ const mockExpenseData = [
     mexpDec: '쿠팡 와우 멤버십',
     mexpType: 'E',
     mexpRpt: 'T',
-    mexpRptdd: '2025-07-20', // 이미 지남 (OVERDUE 상태로 변경 예정)
+    mexpRptdd: '2025-07-20',
     mexpStatus: 'OVERDUE',
-    mcatId: 4,
-    // categoryName: '쇼핑',
-    // categoryColor: '#8BC34A',
-  },
-  {
-    mexpId: 6,
-    mexpMmemId: 'testuser123',
-    mexpDt: '',
-    mexpDec: '',
-    mexpType: 'E',
-    mexpRpt: 'F',
-    mexpRptdd: null,
-    mexpStatus: 'COMPLETED',
-    mcatId: 5,
+    mcatId: 4, // 쇼핑
   },
 
-  // === 구독 완료 (COMPLETED) ===
+  // === 추가 구독 서비스 (PENDING) ===
+  {
+    mexpId: 7,
+    mexpMmemId: 'user001',
+    mexpDt: null,
+    mexpAmt: 12900,
+    mexpDec: 'YouTube Premium',
+    mexpType: 'E',
+    mexpRpt: 'T',
+    mexpRptdd: '2025-07-30',
+    mexpStatus: 'PENDING',
+    mcatId: 1, // 엔터테인먼트
+  },
+  {
+    mexpId: 8,
+    mexpMmemId: 'user001',
+    mexpDt: null,
+    mexpAmt: 16500,
+    mexpDec: '웨이브(Wavve) 구독',
+    mexpType: 'E',
+    mexpRpt: 'T',
+    mexpRptdd: '2025-08-05',
+    mexpStatus: 'PENDING',
+    mcatId: 1, // 엔터테인먼트
+  },
+  {
+    mexpId: 9,
+    mexpMmemId: 'user001',
+    mexpDt: null,
+    mexpAmt: 9900,
+    mexpDec: '멜론 스트리밍',
+    mexpType: 'E',
+    mexpRpt: 'T',
+    mexpRptdd: '2025-08-10',
+    mexpStatus: 'PENDING',
+    mcatId: 1, // 엔터테인먼트
+  },
+  {
+    mexpId: 10,
+    mexpMmemId: 'user001',
+    mexpDt: null,
+    mexpAmt: 55000,
+    mexpDec: 'Microsoft 365',
+    mexpType: 'E',
+    mexpRpt: 'T',
+    mexpRptdd: '2025-08-20',
+    mexpStatus: 'PENDING',
+    mcatId: 2, // 업무/생산성
+  },
+  {
+    mexpId: 11,
+    mexpMmemId: 'user001',
+    mexpDt: null,
+    mexpAmt: 149000,
+    mexpDec: 'Figma Professional',
+    mexpType: 'E',
+    mexpRpt: 'T',
+    mexpRptdd: '2025-09-01',
+    mexpStatus: 'PENDING',
+    mcatId: 2, // 업무/생산성
+  },
+  {
+    mexpId: 12,
+    mexpMmemId: 'user001',
+    mexpDt: null,
+    mexpAmt: 8900,
+    mexpDec: 'Notion Pro',
+    mexpType: 'E',
+    mexpRpt: 'T',
+    mexpRptdd: '2025-07-22',
+    mexpStatus: 'PENDING',
+    mcatId: 2, // 업무/생산성
+  },
+  {
+    mexpId: 13,
+    mexpMmemId: 'user001',
+    mexpDt: null,
+    mexpAmt: 6600,
+    mexpDec: 'Dropbox Plus',
+    mexpType: 'E',
+    mexpRpt: 'T',
+    mexpRptdd: '2025-08-12',
+    mexpStatus: 'PENDING',
+    mcatId: 3, // 클라우드 저장소
+  },
+  {
+    mexpId: 14,
+    mexpMmemId: 'user001',
+    mexpDt: null,
+    mexpAmt: 12000,
+    mexpDec: '11번가 플러스 멤버십',
+    mexpType: 'E',
+    mexpRpt: 'T',
+    mexpRptdd: '2025-08-25',
+    mexpStatus: 'PENDING',
+    mcatId: 4, // 쇼핑
+  },
+  {
+    mexpId: 15,
+    mexpMmemId: 'user001',
+    mexpDt: null,
+    mexpAmt: 29900,
+    mexpDec: '마켓컬리 퍼플박스',
+    mexpType: 'E',
+    mexpRpt: 'T',
+    mexpRptdd: '2025-09-10',
+    mexpStatus: 'PENDING',
+    mcatId: 4, // 쇼핑
+  },
+
+  // === 구독 완료 (COMPLETED) - 최근 결제한 것들 ===
   {
     mexpId: 101,
     mexpMmemId: 'user001',
-    mexpDt: '2025-07-12', // 실제 지출한 날짜
+    mexpDt: '2025-07-12',
     mexpAmt: 17000,
     mexpDec: 'Netflix 구독료',
     mexpType: 'E',
     mexpRpt: 'T',
-    mexpRptdd: '2025-06-25', // 원래 예정일
+    mexpRptdd: '2025-06-25',
     mexpStatus: 'COMPLETED',
-    mcatId: 1,
-    // categoryName: '엔터테인먼트',
-    // categoryColor: '#FF6384',
+    mcatId: 1, // 엔터테인먼트
   },
   {
     mexpId: 102,
@@ -203,25 +295,291 @@ const mockExpenseData = [
     mexpRpt: 'T',
     mexpRptdd: '2025-07-01',
     mexpStatus: 'COMPLETED',
-    mcatId: 3,
-    // categoryName: '클라우드 저장소',
-    // categoryColor: '#FFCE56',
+    mcatId: 3, // 클라우드 저장소
+  },
+  {
+    mexpId: 103,
+    mexpMmemId: 'user001',
+    mexpDt: '2025-07-13',
+    mexpAmt: 10900,
+    mexpDec: 'Spotify Premium',
+    mexpType: 'E',
+    mexpRpt: 'T',
+    mexpRptdd: '2025-06-28',
+    mexpStatus: 'COMPLETED',
+    mcatId: 1, // 엔터테인먼트
+  },
+  {
+    mexpId: 104,
+    mexpMmemId: 'user001',
+    mexpDt: '2025-07-15',
+    mexpAmt: 29000,
+    mexpDec: 'Adobe Creative Cloud',
+    mexpType: 'E',
+    mexpRpt: 'T',
+    mexpRptdd: '2025-07-15',
+    mexpStatus: 'COMPLETED',
+    mcatId: 2, // 업무/생산성
+  },
+  {
+    mexpId: 105,
+    mexpMmemId: 'user001',
+    mexpDt: '2025-07-16',
+    mexpAmt: 12900,
+    mexpDec: 'YouTube Premium',
+    mexpType: 'E',
+    mexpRpt: 'T',
+    mexpRptdd: '2025-06-30',
+    mexpStatus: 'COMPLETED',
+    mcatId: 1, // 엔터테인먼트
+  },
+  {
+    mexpId: 106,
+    mexpMmemId: 'user001',
+    mexpDt: '2025-07-18',
+    mexpAmt: 8900,
+    mexpDec: 'Notion Pro',
+    mexpType: 'E',
+    mexpRpt: 'T',
+    mexpRptdd: '2025-06-22',
+    mexpStatus: 'COMPLETED',
+    mcatId: 2, // 업무/생산성
   },
 
-  // === 일반 지출 (참고용) ===
+  // === 다른 사용자 데이터 ===
   {
     mexpId: 201,
+    mexpMmemId: 'testuser123',
+    mexpDt: null,
+    mexpAmt: 9900,
+    mexpDec: '카카오톡 이모티콘 플러스',
+    mexpType: 'E',
+    mexpRpt: 'T',
+    mexpRptdd: '2025-07-24',
+    mexpStatus: 'PENDING',
+    mcatId: 1, // 엔터테인먼트
+  },
+  {
+    mexpId: 202,
+    mexpMmemId: 'testuser123',
+    mexpDt: null,
+    mexpAmt: 39000,
+    mexpDec: 'ChatGPT Plus',
+    mexpType: 'E',
+    mexpRpt: 'T',
+    mexpRptdd: '2025-08-03',
+    mexpStatus: 'PENDING',
+    mcatId: 2, // 업무/생산성
+  },
+  {
+    mexpId: 203,
+    mexpMmemId: 'testuser123',
+    mexpDt: '2025-07-14',
+    mexpAmt: 16500,
+    mexpDec: '웨이브(Wavve) 구독',
+    mexpType: 'E',
+    mexpRpt: 'T',
+    mexpRptdd: '2025-07-05',
+    mexpStatus: 'COMPLETED',
+    mcatId: 1, // 엔터테인먼트
+  },
+
+  // === 일반 지출 데이터 (참고용/가계부용) ===
+  {
+    mexpId: 301,
     mexpMmemId: 'user001',
     mexpDt: '2025-07-15',
     mexpAmt: 50000,
     mexpDec: '마트 장보기',
     mexpType: 'E',
-    mexpRpt: 'F', // 일회성
+    mexpRpt: 'F',
+    mexpRptdd: null,
+    mexpStatus: 'COMPLETED',
+    mcatId: 5, // 기타
+  },
+  {
+    mexpId: 302,
+    mexpMmemId: 'user001',
+    mexpDt: '2025-07-16',
+    mexpAmt: 25000,
+    mexpDec: '점심 외식',
+    mexpType: 'E',
+    mexpRpt: 'F',
+    mexpRptdd: null,
+    mexpStatus: 'COMPLETED',
+    mcatId: 5, // 기타
+  },
+  {
+    mexpId: 303,
+    mexpMmemId: 'user001',
+    mexpDt: '2025-07-17',
+    mexpAmt: 80000,
+    mexpDec: '주유비',
+    mexpType: 'E',
+    mexpRpt: 'F',
+    mexpRptdd: null,
+    mexpStatus: 'COMPLETED',
+    mcatId: 5, // 기타
+  },
+  {
+    mexpId: 304,
+    mexpMmemId: 'user001',
+    mexpDt: '2025-07-18',
+    mexpAmt: 15000,
+    mexpDec: '커피숍',
+    mexpType: 'E',
+    mexpRpt: 'F',
+    mexpRptdd: null,
+    mexpStatus: 'COMPLETED',
+    mcatId: 5, // 기타
+  },
+  {
+    mexpId: 305,
+    mexpMmemId: 'user001',
+    mexpDt: '2025-07-19',
+    mexpAmt: 120000,
+    mexpDec: '온라인 쇼핑',
+    mexpType: 'E',
+    mexpRpt: 'F',
+    mexpRptdd: null,
+    mexpStatus: 'COMPLETED',
+    mcatId: 4, // 쇼핑
+  },
+
+  // === 수입 데이터 (Income) ===
+  {
+    mexpId: 401,
+    mexpMmemId: 'user001',
+    mexpDt: '2025-07-01',
+    mexpAmt: 3500000,
+    mexpDec: '월급',
+    mexpType: 'I', // Income
+    mexpRpt: 'T',
+    mexpRptdd: '2025-08-01',
+    mexpStatus: 'COMPLETED',
+    mcatId: 5, // 기타
+  },
+  {
+    mexpId: 402,
+    mexpMmemId: 'user001',
+    mexpDt: '2025-07-10',
+    mexpAmt: 500000,
+    mexpDec: '부업 수입',
+    mexpType: 'I',
+    mexpRpt: 'F',
+    mexpRptdd: null,
+    mexpStatus: 'COMPLETED',
+    mcatId: 5, // 기타
+  },
+  {
+    mexpId: 403,
+    mexpMmemId: 'testuser123',
+    mexpDt: '2025-07-01',
+    mexpAmt: 2800000,
+    mexpDec: '월급',
+    mexpType: 'I',
+    mexpRpt: 'T',
+    mexpRptdd: '2025-08-01',
+    mexpStatus: 'COMPLETED',
+    mcatId: 5, // 기타
+  },
+
+  // === 챌린지 페이지용 더미 데이터 (최근 소비 데이터 추가) ===
+  {
+    mexpId: 501,
+    mexpMmemId: 'user001',
+    mexpDt: '2025-01-01',
+    mexpAmt: 50000,
+    mexpDec: '신년 외식',
+    mexpType: 'E',
+    mexpRpt: 'F',
     mexpRptdd: null,
     mexpStatus: 'COMPLETED',
     mcatId: 5,
-    // categoryName: '기타',
-    // categoryColor: '#9C27B0',
+  },
+  {
+    mexpId: 502,
+    mexpMmemId: 'user001',
+    mexpDt: '2025-01-02',
+    mexpAmt: 30000,
+    mexpDec: '마트 장보기',
+    mexpType: 'E',
+    mexpRpt: 'F',
+    mexpRptdd: null,
+    mexpStatus: 'COMPLETED',
+    mcatId: 5,
+  },
+  {
+    mexpId: 503,
+    mexpMmemId: 'user001',
+    mexpDt: '2025-01-03',
+    mexpAmt: 20000,
+    mexpDec: '카페',
+    mexpType: 'E',
+    mexpRpt: 'F',
+    mexpRptdd: null,
+    mexpStatus: 'COMPLETED',
+    mcatId: 5,
+  },
+  {
+    mexpId: 504,
+    mexpMmemId: 'user001',
+    mexpDt: '2025-01-04',
+    mexpAmt: 45000,
+    mexpDec: '온라인 쇼핑',
+    mexpType: 'E',
+    mexpRpt: 'F',
+    mexpRptdd: null,
+    mexpStatus: 'COMPLETED',
+    mcatId: 4,
+  },
+  {
+    mexpId: 505,
+    mexpMmemId: 'user001',
+    mexpDt: '2025-01-05',
+    mexpAmt: 25000,
+    mexpDec: '교통비',
+    mexpType: 'E',
+    mexpRpt: 'F',
+    mexpRptdd: null,
+    mexpStatus: 'COMPLETED',
+    mcatId: 5,
+  },
+  {
+    mexpId: 506,
+    mexpMmemId: 'user001',
+    mexpDt: '2024-12-15',
+    mexpAmt: 150000,
+    mexpDec: '연말 모임',
+    mexpType: 'E',
+    mexpRpt: 'F',
+    mexpRptdd: null,
+    mexpStatus: 'COMPLETED',
+    mcatId: 5,
+  },
+  {
+    mexpId: 507,
+    mexpMmemId: 'user001',
+    mexpDt: '2024-12-20',
+    mexpAmt: 200000,
+    mexpDec: '선물 구매',
+    mexpType: 'E',
+    mexpRpt: 'F',
+    mexpRptdd: null,
+    mexpStatus: 'COMPLETED',
+    mcatId: 4,
+  },
+  {
+    mexpId: 508,
+    mexpMmemId: 'user001',
+    mexpDt: '2024-11-10',
+    mexpAmt: 80000,
+    mexpDec: '의료비',
+    mexpType: 'E',
+    mexpRpt: 'F',
+    mexpRptdd: null,
+    mexpStatus: 'COMPLETED',
+    mcatId: 5,
   },
 ];
 
