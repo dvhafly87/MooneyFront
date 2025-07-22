@@ -1,6 +1,6 @@
-import MOCKDATA from '../../assets/mockData';
 
-// TODO mockapi 구현
+import MOCKDATA from '../../assets/mockData.js';
+
 //? 로그인, 회원가입, 토큰 검증, 이메일 인증코드 보내기, 이메일 받은 인증코드 검증, 아이디 중복검사, 닉네임 중복검사,
 //? 회원정보 수정, 회원탈퇴, 회원정보 가져오기, 로그아웃
 
@@ -10,7 +10,7 @@ const login = async (credentials) => {
 
   const { id, password } = credentials;
 
-  const user = MOCKDATA.mockUserData.find((u) => u.id === id && u.pw === password);
+  const user = MOCKDATA.mockUserData.find((u) => u.mmemId === id && u.mmemPw === password);
 
   if (!user) {
     console.log('로그인 에러가 났다');
@@ -33,12 +33,12 @@ const login = async (credentials) => {
     data: {
       token: mockJwtToken,
       user: {
-        id: user.id,
-        nick: user.nick,
-        ppnt: user.ppnt,
-        regd: user.regd,
-        bir: user.bir,
-        pphoto: user.pphoto,
+        id: user.mmemId,
+        nick: user.mmemNick,
+        ppnt: user.mmemPnt,
+        regd: user.mmemRegd,
+        bir: user.mmemBir,
+        pphoto: user.mmemPphoto,
       },
     },
   };
@@ -51,7 +51,9 @@ const register = async (userData) => {
   const { id, nickname, password, birthDate } = userData;
 
   // 중복 검사
-  const existingUser = MOCKDATA.mockUserData.find((u) => u.id === id && u.nick === nickname);
+  const existingUser = MOCKDATA.mockUserData.find(
+    (u) => u.mmemId === id && u.mmemNick === nickname,
+  );
 
   if (existingUser) {
     if (existingUser.id === id) {
@@ -63,9 +65,9 @@ const register = async (userData) => {
   }
 
   const newUser = {
-    id: userData.id,
+    id: id,
     pw: password,
-    nick: userData.nickname,
+    nick: nickname,
     pphoto: null,
     regd: new Date().toISOString(),
     bir: birthDate,
@@ -200,7 +202,7 @@ const verifyEmailCode = async (email, code) => {
 const checkIdDuplicate = async (id) => {
   await new Promise((resolve) => setTimeout(resolve, 500));
 
-  const exists = MOCKDATA.mockUserData.some((u) => u.id === id);
+  const exists = MOCKDATA.mockUserData.some((u) => u.mmemId === id);
 
   return {
     success: true,
@@ -213,7 +215,7 @@ const checkIdDuplicate = async (id) => {
 const checkNicknameDuplicate = async (nickname) => {
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
-  const exists = MOCKDATA.mockUserData.some((u) => u.nick === nickname);
+  const exists = MOCKDATA.mockUserData.some((u) => u.mmemNick === nickname);
 
   return {
     success: true,
@@ -227,7 +229,7 @@ const updateUserInfo = async (userId, updateData) => {
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
   // 사용자 찾기
-  const userIndex = MOCKDATA.mockUserData.findIndex((u) => u.id === userId);
+  const userIndex = MOCKDATA.mockUserData.findIndex((u) => u.mmemId === userId);
 
   if (userIndex === -1) {
     throw new Error('사용자를 찾을 수 없음');
@@ -238,7 +240,7 @@ const updateUserInfo = async (userId, updateData) => {
   // 닉네임 중복 확인 (현재 사용자 제외)
   if (updateData.nickname && updateData.nickname !== user.nick) {
     const nicknameExists = MOCKDATA.mockUserData.some(
-      (u) => u.nick === updateData.nickname && u.id !== userId,
+      (u) => u.mmemNick === updateData.nickname && u.mmemId !== userId,
     );
 
     if (nicknameExists) {
@@ -287,7 +289,7 @@ const deleteAccount = async (userId, password) => {
   await new Promise((resolve) => setTimeout(resolve, 700));
 
   // 사용자 찾기
-  const userIndex = MOCKDATA.mockUserData.findIndex((u) => u.id === userId);
+  const userIndex = MOCKDATA.mockUserData.findIndex((u) => u.mmemId === userId);
 
   if (userIndex === -1) {
     throw new Error('사용자 찾을 수 없음');
@@ -318,7 +320,7 @@ const deleteAccount = async (userId, password) => {
 const getUserInfo = async (userId) => {
   await new Promise((resolve) => setTimeout(resolve, 600));
 
-  const user = MOCKDATA.mockUserData.find((u) => u.id === userId);
+  const user = MOCKDATA.mockUserData.find((u) => u.mmemId === userId);
 
   if (!user) {
     throw new Error('사용자 찾을 수 없음');
@@ -353,7 +355,7 @@ const verifyPassword = async (userId, password) => {
   await new Promise((resolve) => setTimeout(resolve, 500));
 
   // 사용자 찾기
-  const user = MOCKDATA.mockUserData.find((u) => u.id === userId);
+  const user = MOCKDATA.mockUserData.find((u) => u.mmemId === userId);
 
   if (!user) {
     throw new Error('사용자를 찾을 수 없음');
