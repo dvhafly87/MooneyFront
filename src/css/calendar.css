@@ -1,21 +1,20 @@
 .react-calendar {
-  width: 529.57px;
-  height: 393.61px;
+  width: 520px;
+  height: 360px;
   background: #F7F6F5;
   border: none;
   border-radius: 20px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   font-family: 'Pretendard', sans-serif;
   padding: 20px;
-  box-sizing: border-box; /* padding 포함 계산 */
-  overflow: hidden;       /* 내부 넘침 방지 */
+  box-sizing: border-box;
+  overflow: hidden;
 }
-
   
   /* 네비게이션 (월/년 이동) */
   .react-calendar__navigation {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-between; 
     align-items: center;
     margin-bottom: 10px;
   }
@@ -106,5 +105,7 @@
     justify-content: center;
     align-items: center;
     width: 100%;
-    padding: 2rem 0;
+    padding: 0.5rem 0 0 0; /* ✅ 상단만 살짝 띄움 */
+    margin-bottom: 40px;
   }
+  

@@ -19,7 +19,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  gap: 40px;
+  gap: 40px; /* 그대로 두거나 36px로 약간 줄여도 무방 */
   padding: 20px 40px;
 }
 
@@ -27,14 +27,16 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 20px; /* ✅ 달력과 그래프 사이 여백 */
 }
 
 .right-column {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 781px;
+  height: 781px; /* ✅ left-column과 동일하게 */
 }
+
 
 .calender-container {
   width: 574px;
@@ -42,7 +44,12 @@ body {
   border-radius: 50px;
   background-color: #7898B1;
   text-align: center;
-  display: inline-block;
+  display: flex;            /* ✅ 내부 달력+그래프 세로 정렬 */
+  flex-direction: column;
+  align-items: center;
+  justify-content: start;
+  padding-top: 20px;        /* ✅ 내부 여백 (달력 위쪽) */
+  box-sizing: border-box;
 }
 
 .income-card,

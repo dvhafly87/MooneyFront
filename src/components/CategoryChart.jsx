@@ -10,32 +10,37 @@ import {
   Cell,
 } from 'recharts';
 
-const data = [
-  { category: '식비', amount: 100000 },
-  { category: '교통', amount: 18000 },
-  { category: '문화', amount: 12000 },
-  { category: '기타', amount: 9000 },
-];
+const categoryColors = ['#FF6384', '#36A2EB', '#FFCE56', '#8BC34A', '#9C27B0', '#00ACC1'];
 
-const categoryColors = {
-  식비: '#FF6384',
-  교통: '#36A2EB',
-  문화: '#FFCE56',
-  기타: '#8BC34A',
-};
+function CategoryChart({ data }) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="chart-bar">
+        <p style={{ textAlign: 'center', marginTop: '100px', color: '#888' }}>데이터가 없습니다.</p>
+      </div>
+    );
+  }
 
-function CategoryChart() {
+  const amounts = data.map((d) => d.amount);
+  const max = Math.max(...amounts);
+  const avg = amounts.reduce((a, b) => a + b, 0) / amounts.length;
+  const maxY = Math.ceil(((max + avg) * 1.1) / 10000) * 10000 || 10000;
+
   return (
     <div className="chart-bar">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} barSize={30}>
+      <ResponsiveContainer width="100%" height={280}>
+        <BarChart
+          data={data}
+          barSize={30}
+          margin={{ top: 10, right: 20, left: 40, bottom: 10 }} // ✅ 여기!
+        >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="category" />
-          <YAxis width={60} />
+          <YAxis width={60} domain={[0, maxY]} />
           <Tooltip formatter={(value) => `${value.toLocaleString()}원`} />
           <Bar dataKey="amount" radius={[10, 10, 0, 0]}>
             {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={categoryColors[entry.category]} />
+              <Cell key={`cell-${index}`} fill={categoryColors[index % categoryColors.length]} />
             ))}
           </Bar>
         </BarChart>
@@ -43,4 +48,5 @@ function CategoryChart() {
     </div>
   );
 }
+
 export default CategoryChart;
