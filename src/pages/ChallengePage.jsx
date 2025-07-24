@@ -1,6 +1,6 @@
-// src/pages/ChallengePage.jsx
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { showError, showSuccess } from '../utils/toast';
+import { CHALLENGE_API } from '../services/apiService';
 import S from '../styles/challengePage.style';
 
 const challengeStatus = {
@@ -13,6 +13,8 @@ const challengeStatus = {
 function ChallengePage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formCurrentAmount, setFormCurrentAmount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [userPoints, setUserPoints] = useState(0);
 
   // 챌린지 추가 모달 initial Data
   const [formData, setFormData] = useState({
@@ -24,7 +26,10 @@ function ChallengePage() {
     contents: '',
   });
 
-  // Mock 소비 데이터 (백엔드 MOONEY_EXPENSE 테이블에서 가져올 데이터)
+  // API에서 가져온 챌린지 데이터
+  const [allChallenges, setAllChallenges] = useState([]);
+
+  // Mock 소비 데이터 (CHALLENGE_API.getExpenseAmount 사용으로 대체 가능)
   const mockExpenseData = useMemo(
     () => [
       { date: '2025-01-01', amount: 50000 },
@@ -43,75 +48,63 @@ function ChallengePage() {
     [],
   );
 
-  // 모든 챌린지 데이터 (실제로는 API에서 가져올 데이터)
-  const [mockAllChallenges, setMockAllChallenges] = useState([
-    {
-      id: 1,
-      title: '1월 절약 챌린지',
-      startDate: '2025-01-01',
-      endDate: '2025-01-31',
-      targetAmount: 600000,
-      reward: 100,
-      contents: '1월 한 달 동안 60만원 이하로 소비하기',
-    },
-    {
-      id: 2,
-      title: '12월 절약 챌린지',
-      startDate: '2024-12-01',
-      endDate: '2024-12-31',
-      targetAmount: 500000,
-      reward: 150,
-      contents: '12월 연말 소비 줄이기',
-    },
-    {
-      id: 3,
-      title: '11월 절약 챌린지',
-      startDate: '2024-11-01',
-      endDate: '2024-11-30',
-      targetAmount: 400000,
-      reward: 100,
-      contents: '11월 식비 절약하기',
-    },
-    {
-      id: 4,
-      title: '2월 절약 챌린지',
-      startDate: '2025-02-01',
-      endDate: '2025-02-28',
-      targetAmount: 550000,
-      reward: 120,
-      contents: '2월 교통비 절약하기',
-    },
-    {
-      id: 5,
-      title: '9월 절약 챌린지',
-      startDate: '2025-09-01',
-      endDate: '2025-09-30',
-      targetAmount: 500000,
-      reward: 100,
-      contents: '9월 쇼핑 절약하기',
-    },
-  ]);
+  // API에서 데이터 로드
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+
+        // 모든 챌린지 데이터 가져오기
+        const challengesResponse = await CHALLENGE_API.getAllChallenges();
+        if (challengesResponse.success) {
+          setAllChallenges(challengesResponse.data);
+        }
+
+        // 사용자 포인트 가져오기
+        const pointsResponse = await CHALLENGE_API.getUserPoints();
+        if (pointsResponse.success) {
+          setUserPoints(pointsResponse.data.points);
+        }
+      } catch (error) {
+        console.error('데이터 로드 실패:', error);
+        showError('데이터를 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
 
   // startDate부터 현재(또는 endDate)까지의 지출 합계 계산
   const calculateCurrentAmount = useCallback(
-    (startDate, endDate = null) => {
-      const today = new Date();
-      const challengeStartDate = new Date(startDate);
-
-      // 시작일이 미래인 경우
-      if (challengeStartDate > today) {
+    async (startDate, endDate = null) => {
+      try {
+        const response = await CHALLENGE_API.getExpenseAmount(startDate, endDate);
+        if (response.success) {
+          return response.data.amount;
+        }
         return 0;
+      } catch (error) {
+        console.error('소비 금액 계산 실패:', error);
+        // Fallback: mockExpenseData 사용
+        const today = new Date();
+        const challengeStartDate = new Date(startDate);
+
+        if (challengeStartDate > today) {
+          return 0;
+        }
+
+        const challengeEndDate = endDate ? new Date(endDate) : today;
+        const calculationEndDate = challengeEndDate < today ? challengeEndDate : today;
+
+        return mockExpenseData
+          .filter((expense) => {
+            const expenseDate = new Date(expense.date);
+            return expenseDate >= challengeStartDate && expenseDate <= calculationEndDate;
+          })
+          .reduce((total, expense) => total + expense.amount, 0);
       }
-
-      const challengeEndDate = endDate ? new Date(endDate) : today;
-      const calculationEndDate = challengeEndDate < today ? challengeEndDate : today;
-
-      return mockExpenseData
-        .filter((expense) => {
-          const expenseDate = new Date(expense.date);
-          return expenseDate >= challengeStartDate && expenseDate <= calculationEndDate;
-        })
-        .reduce((total, expense) => total + expense.amount, 0);
     },
     [mockExpenseData],
   );
@@ -165,29 +158,47 @@ function ChallengePage() {
     return Math.ceil((end - today) / (1000 * 60 * 60 * 24));
   }, []);
 
-  // 모든 챌린지에 계산된 데이터 추가
-  const challengesWithStatus = useMemo(() => {
-    return mockAllChallenges.map((challenge) => {
-      const currentAmount = calculateCurrentAmount(challenge.startDate, challenge.endDate);
-      const status = calculateChallengeStatus(challenge, currentAmount);
-      const gaugeBar =
-        challenge.targetAmount > 0
-          ? Math.min((currentAmount / challenge.targetAmount) * 100, 100)
-          : 0;
-      const timeProgress = calculateTimeProgress(challenge.startDate, challenge.endDate);
-      const remainingDays = calculateRemainingDays(challenge.endDate);
+  // 모든 챌린지에 계산된 데이터 추가 (비동기 처리)
+  const [challengesWithStatus, setChallengesWithStatus] = useState([]);
 
-      return {
-        ...challenge,
-        currentAmount,
-        status,
-        gaugeBar,
-        timeProgress,
-        remainingDays,
-      };
-    });
+  useEffect(() => {
+    const calculateChallengeData = async () => {
+      if (allChallenges.length === 0) {
+        setChallengesWithStatus([]);
+        return;
+      }
+
+      const updatedChallenges = await Promise.all(
+        allChallenges.map(async (challenge) => {
+          const currentAmount = await calculateCurrentAmount(
+            challenge.startDate,
+            challenge.endDate,
+          );
+          const status = calculateChallengeStatus(challenge, currentAmount);
+          const gaugeBar =
+            challenge.targetAmount > 0
+              ? Math.min((currentAmount / challenge.targetAmount) * 100, 100)
+              : 0;
+          const timeProgress = calculateTimeProgress(challenge.startDate, challenge.endDate);
+          const remainingDays = calculateRemainingDays(challenge.endDate);
+
+          return {
+            ...challenge,
+            currentAmount,
+            status,
+            gaugeBar,
+            timeProgress,
+            remainingDays,
+          };
+        }),
+      );
+
+      setChallengesWithStatus(updatedChallenges);
+    };
+
+    calculateChallengeData();
   }, [
-    mockAllChallenges,
+    allChallenges,
     calculateCurrentAmount,
     calculateChallengeStatus,
     calculateTimeProgress,
@@ -255,11 +266,21 @@ function ChallengePage() {
   }, []);
 
   const handleStartDateChange = useCallback(
-    (e) => {
+    async (e) => {
       const selectedStartDate = e.target.value;
       handleFormChange(e);
-      const calculatedAmount = calculateCurrentAmount(selectedStartDate);
-      setFormCurrentAmount(calculatedAmount);
+
+      if (selectedStartDate) {
+        try {
+          const calculatedAmount = await calculateCurrentAmount(selectedStartDate);
+          setFormCurrentAmount(calculatedAmount);
+        } catch (error) {
+          console.error('현재 소비 금액 계산 실패:', error);
+          setFormCurrentAmount(0);
+        }
+      } else {
+        setFormCurrentAmount(0);
+      }
     },
     [handleFormChange, calculateCurrentAmount],
   );
@@ -296,31 +317,36 @@ function ChallengePage() {
   }, []);
 
   const handleCreateChallenge = useCallback(
-    (e) => {
+    async (e) => {
       e.preventDefault();
 
       if (!validateForm(formData)) {
         return;
       }
 
-      const newChallenge = {
-        id: Date.now(),
-        title: formData.title,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        targetAmount: parseInt(formData.targetAmount),
-        reward: parseInt(formData.reward) || 0,
-        contents: formData.contents || '',
-      };
+      try {
+        const response = await CHALLENGE_API.createChallenge(formData);
 
-      setMockAllChallenges((prev) => [...prev, newChallenge]);
+        if (response.success) {
+          // 챌린지 목록 새로고침
+          const challengesResponse = await CHALLENGE_API.getAllChallenges();
+          if (challengesResponse.success) {
+            setAllChallenges(challengesResponse.data);
+          }
 
-      // 성공 메시지 with 커스텀 옵션
-      showSuccess('🎉 챌린지가 성공적으로 생성되었습니다!', {
-        autoClose: 4000,
-      });
+          // 성공 메시지
+          showSuccess('🎉 챌린지가 성공적으로 생성되었습니다!', {
+            autoClose: 4000,
+          });
 
-      handleCloseModal();
+          handleCloseModal();
+        } else {
+          showError(response.message || '챌린지 생성에 실패했습니다.');
+        }
+      } catch (error) {
+        console.error('챌린지 생성 실패:', error);
+        showError('챌린지 생성 중 오류가 발생했습니다.');
+      }
     },
     [formData, validateForm, handleCloseModal],
   );
@@ -340,6 +366,24 @@ function ChallengePage() {
         return '#666';
     }
   }, []);
+
+  // 로딩 중 표시
+  if (loading) {
+    return (
+      <S.PageContainer>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '400px',
+          }}
+        >
+          <p>챌린지 데이터를 불러오는 중...</p>
+        </div>
+      </S.PageContainer>
+    );
+  }
 
   return (
     <S.PageContainer>
@@ -462,7 +506,7 @@ function ChallengePage() {
 
         <S.PointsCard>
           <S.PointsLabel>현재 보유중인 포인트</S.PointsLabel>
-          <S.PointsValue>1,250 P</S.PointsValue>
+          <S.PointsValue>{userPoints.toLocaleString()} P</S.PointsValue>
         </S.PointsCard>
 
         <S.Card>

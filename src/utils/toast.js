@@ -8,7 +8,7 @@ import { toast } from 'react-toastify';
 // 🔹 ToastContainer용 전역 설정 (App.jsx에서 사용)
 export const TOAST_CONTAINER_CONFIG = {
   position: 'top-right',
-  autoClose: 3000,
+  autoClose: 1000,
   hideProgressBar: false,
   newestOnTop: false,
   closeOnClick: true,
@@ -25,7 +25,7 @@ export const TOAST_CONTAINER_CONFIG = {
 // 🔹 개별 toast 함수용 기본 설정
 const defaultOptions = {
   position: 'top-right',
-  autoClose: 3000,
+  autoClose: 1000,
   hideProgressBar: false,
   closeOnClick: true,
   pauseOnHover: true,

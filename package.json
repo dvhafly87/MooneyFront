@@ -9,7 +9,11 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d build",
+    "dev:mock": "cross-env VITE_USE_MOCK_API=true vite",
+    "dev:real": "cross-env VITE_USE_MOCK_API=false vite",
+    "build:mock": "cross-env VITE_USE_MOCK_API=true vite build",
+    "build:real": "cross-env VITE_USE_MOCK_API=false vite build"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -44,6 +48,7 @@
     "@types/react-dom": "^19.1.6",
     "@vitejs/plugin-react": "^4.6.0",
     "@vitejs/plugin-react-swc": "^3.10.2",
+    "cross-env": "^7.0.3",
     "eslint": "^9.29.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.5.1",

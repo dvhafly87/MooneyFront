@@ -5,8 +5,8 @@ import useAuth from '../contexts/useAuth.jsx';
 import { toast } from 'react-toastify';
 import { ROUTES } from '../route/routes';
 import logo_nuki from '../img/logo_nuki.png';
-import API from '../services/mock/mockUser.js';
 import S from '../styles/loginPage.style.js';
+import { USER_API } from './../services/apiService';
 
 function LoginPage() {
   const [currentForm, setCurrentForm] = useState('login'); // 'login', 'register', 'reset'
@@ -21,6 +21,7 @@ function LoginPage() {
     nickname: '',
     birthDate: '',
   });
+
   // 검증 상태들
   const [isIdChecked, setIsIdChecked] = useState(false);
   const [isNicknameChecked, setIsNicknameChecked] = useState(false);
@@ -246,13 +247,12 @@ function LoginPage() {
       return;
     }
 
-    // 회원가입 API 호출
+    // 회원가입 USER_API 호출
     const result = await register({
       id: formData.id,
       password: formData.password,
       nickname: formData.nickname,
       birthDate: formData.birthDate,
-      email: formData.email,
     });
 
     if (result.success) {
@@ -312,7 +312,7 @@ function LoginPage() {
     }
 
     try {
-      const result = await API.sendVerificationEmail(formData.email);
+      const result = await USER_API.sendVerificationEmail(formData.email);
       if (result.success) {
         toast.success(result.message);
         setIsEmailCodeSent(true);
@@ -332,7 +332,7 @@ function LoginPage() {
     }
 
     try {
-      const result = await API.verifyEmailCode(formData.email, emailVerificationCode);
+      const result = await USER_API.verifyEmailCode(formData.email, emailVerificationCode);
       if (result.success) {
         toast.success(result.message);
         setIsEmailVerified(true);

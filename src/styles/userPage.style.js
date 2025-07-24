@@ -1,4 +1,3 @@
-// src/styles/userPage.style.js
 import styled from '@emotion/styled';
 
 // 메인 페이지 컨테이너
@@ -171,28 +170,6 @@ const SectionTitle = styled.h3`
   margin-bottom: 16px;
 `;
 
-// 카테고리 버튼
-const CategoryButton = styled.button`
-  width: 100%;
-  padding: 12px;
-  background-color: #28a745;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-
-  &:hover {
-    background-color: #218838;
-  }
-
-  &:active {
-    transform: translateY(1px);
-  }
-`;
-
 // 액션 버튼들 컨테이너
 const ActionButtons = styled.div`
   display: flex;
@@ -262,160 +239,7 @@ const Error = styled.div`
   border: 1px solid #e0e0e0;
 `;
 
-// 모달 컴포넌트들
-const ModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-`;
-
-const Modal = styled.div`
-  background-color: white;
-  border-radius: 12px;
-  padding: 0;
-  max-width: 400px;
-  width: 90%;
-  max-height: 80%;
-  overflow: hidden;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-`;
-
-const ModalHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e0e0e0;
-`;
-
-const ModalTitle = styled.h3`
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-  margin: 0;
-`;
-
-const CloseButton = styled.button`
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #666;
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.3s ease;
-
-  &:hover {
-    color: #333;
-  }
-`;
-
-const ModalContent = styled.div`
-  padding: 24px;
-`;
-
-const CategoryForm = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-`;
-
-const ModalDescription = styled.p`
-  margin: 0;
-  font-size: 16px;
-  color: #666;
-  text-align: center;
-`;
-
-const CategoryExamples = styled.div`
-  text-align: center;
-`;
-
-const ExampleTitle = styled.h4`
-  font-size: 14px;
-  color: #333;
-  margin: 0 0 12px 0;
-`;
-
-const ExampleTags = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-`;
-
-const ExampleTag = styled.span`
-  padding: 6px 12px;
-  background-color: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 16px;
-  font-size: 12px;
-  color: #495057;
-  transition: background-color 0.3s ease;
-
-  &:hover {
-    background-color: #e9ecef;
-  }
-`;
-
-const ModalButtons = styled.div`
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-`;
-
-const ModalConfirmButton = styled.button`
-  padding: 10px 20px;
-  background-color: #4a90e2;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.3s ease;
-
-  &:hover {
-    background-color: #357abd;
-  }
-
-  &:active {
-    transform: translateY(1px);
-  }
-`;
-
-const ModalCancelButton = styled.button`
-  padding: 10px 20px;
-  background-color: #6c757d;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.3s ease;
-
-  &:hover {
-    background-color: #5a6268;
-  }
-
-  &:active {
-    transform: translateY(1px);
-  }
-`;
-
-// Default export로 모든 styled components를 하나의 객체로 내보내기
+// Default export로 필요한 styled components만 내보내기
 const S = {
   // Layout
   PageContainer,
@@ -446,7 +270,6 @@ const S = {
   SectionTitle,
 
   // Action Buttons
-  CategoryButton,
   ActionButtons,
   EditButton,
   ExitButton,
@@ -454,23 +277,6 @@ const S = {
   // Loading & Error
   Loading,
   Error,
-
-  // Modal
-  ModalOverlay,
-  Modal,
-  ModalHeader,
-  ModalTitle,
-  CloseButton,
-  ModalContent,
-  CategoryForm,
-  ModalDescription,
-  CategoryExamples,
-  ExampleTitle,
-  ExampleTags,
-  ExampleTag,
-  ModalButtons,
-  ModalConfirmButton,
-  ModalCancelButton,
 };
 
 export default S;

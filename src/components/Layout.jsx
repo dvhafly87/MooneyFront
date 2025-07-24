@@ -51,8 +51,8 @@ function Layout({ children }) {
         onClick={ToggleSidebar}
         style={{
           position: 'fixed',
-          top: '30px',
-          left: '30px',
+          top: '25px',
+          left: '25px',
           width: '32px',
           height: '32px',
           zIndex: 1100,

@@ -1,22 +1,55 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import useAuth from '../contexts/useAuth.jsx';
 import { toast } from 'react-toastify';
 import { ROUTES } from '../route/routes';
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, checkTokenExpiry, loading } = useAuth();
+  const { isAuthenticated, checkUserAuth, loading } = useAuth();
   const location = useLocation();
+  const [isChecking, setIsChecking] = useState(true);
 
-  // 페이지 이동할 때마다 토큰 체크
+  // 🔥 useRef로 최신 함수 참조 유지 (무한루프 방지)
+  const checkUserAuthRef = useRef(checkUserAuth);
+
+  // 🔥 함수가 변경될 때마다 ref 업데이트
   useEffect(() => {
-    if (isAuthenticated && !checkTokenExpiry()) {
-      toast.error('로그인이 만료되었습니다. 다시 로그인해주세요.');
-    }
-  }, [isAuthenticated, checkTokenExpiry, location.pathname]);
+    checkUserAuthRef.current = checkUserAuth;
+  }, [checkUserAuth]);
 
-  // 로딩 중일 때
-  if (loading) {
+  // 🔥 컴포넌트 마운트 시 세션 검증 (한 번만 실행)
+  useEffect(() => {
+    const verifySession = async () => {
+      setIsChecking(true);
+      try {
+        const isValid = await checkUserAuthRef.current(); // ref 사용
+        if (!isValid) {
+          console.log('세션 없음 - 로그인 페이지로 이동');
+        }
+      } catch (error) {
+        console.error('세션 검증 중 오류:', error);
+      } finally {
+        setIsChecking(false);
+      }
+    };
+
+    verifySession();
+  }, []); // 🔥 빈 배열 - 마운트 시 한 번만 실행
+
+  // 🔥 페이지 이동할 때마다 세션 체크 (이미 인증된 경우에만)
+  useEffect(() => {
+    if (isAuthenticated && !isChecking) {
+      checkUserAuthRef.current().then((isValid) => {
+        // ref 사용
+        if (!isValid) {
+          toast.error('세션이 만료되었습니다. 다시 로그인해주세요.');
+        }
+      });
+    }
+  }, [isAuthenticated, location.pathname, isChecking]); // 🔥 checkUserAuth 없음 - ESLint 경고 해결
+
+  // 🔥 세션 체크 중이거나 로딩 중일 때
+  if (isChecking || loading) {
     return (
       <div
         style={{
@@ -34,18 +67,18 @@ const ProtectedRoute = ({ children }) => {
             color: '#666',
           }}
         >
-          로딩 중...
+          {isChecking ? '세션 확인 중...' : '로딩 중...'}
         </div>
       </div>
     );
   }
 
-  // 인증되지 않은 경우 로그인 페이지로 리다이렉트
+  // 🔥 세션이 없거나 인증되지 않은 경우 로그인 페이지로 리다이렉트
   if (!isAuthenticated) {
     return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />;
   }
 
-  // 인증된 경우 자식 컴포넌트 렌더링
+  // 🔥 세션이 유효하고 인증된 경우 자식 컴포넌트 렌더링
   return children;
 };
 

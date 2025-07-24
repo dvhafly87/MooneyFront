@@ -508,10 +508,10 @@ const ModifyUserPage = () => {
                   />
                 </ProfileImageSection>
 
-                {/* 아이디 (수정 불가) */}
+                {/* 🔥 아이디 (수정 불가) - loginId 필드 사용 */}
                 <InputGroup>
                   <Label htmlFor="userId">아이디</Label>
-                  <Input type="text" id="userId" value={user?.id || ''} disabled />
+                  <Input type="text" id="userId" value={user?.loginId || user?.id || ''} disabled />
                 </InputGroup>
 
                 {/* 닉네임 */}

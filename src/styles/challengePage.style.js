@@ -5,7 +5,7 @@ const PageContainer = styled.div`
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 20px;
-  width: 100%;
+  width: 95%;
   height: 100%;
   padding: 20px;
 `;
@@ -122,6 +122,45 @@ const StatusBadge = styled.div`
   border-radius: 5px;
   display: inline-block;
   font-size: 12px;
+`;
+
+// 액션 버튼들 컨테이너
+const ActionButtons = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-top: 15px;
+  justify-content: flex-end;
+`;
+
+// 개별 액션 버튼
+const ActionButton = styled.button`
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  background-color: ${(props) => {
+    switch (props.variant) {
+      case 'edit':
+        return '#4A90E2';
+      case 'delete':
+        return '#FF4D4D';
+      default:
+        return '#666';
+    }
+  }};
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    opacity: 0.8;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
 `;
 
 // 버튼 컴포넌트
@@ -410,6 +449,8 @@ const S = {
   // Status & Buttons
   StatusBadge,
   AddButton,
+  ActionButtons, // 🔥 추가됨
+  ActionButton, // 🔥 추가됨
 
   // Previous Challenges
   PreviousChallengeItem,

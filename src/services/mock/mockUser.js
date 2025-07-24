@@ -1,10 +1,6 @@
-
 import MOCKDATA from '../../assets/mockData.js';
 
-//? 로그인, 회원가입, 토큰 검증, 이메일 인증코드 보내기, 이메일 받은 인증코드 검증, 아이디 중복검사, 닉네임 중복검사,
-//? 회원정보 수정, 회원탈퇴, 회원정보 가져오기, 로그아웃
-
-// 로그인 mockAPI
+//? 로그인 API - sessionStorage로 세션 관리
 const login = async (credentials) => {
   await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -17,23 +13,324 @@ const login = async (credentials) => {
     throw new Error('아이디 or 비번 틀림');
   }
 
-  // JWT 토큰 생성 시뮬레이션
-  const mockJwtToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${btoa(
-    JSON.stringify({
-      sub: user.id,
-      nickname: user.nickname,
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24시간
-    }),
-  )}.mock_signature_${Date.now()}`;
+  // 🔥 Mock 세션 생성 (실제 백엔드의 세션과 유사)
+  const mockSession = {
+    userId: user.mmemId,
+    loginTime: Date.now(),
+    sessionId: 'mock_session_' + Date.now(),
+  };
 
+  sessionStorage.setItem('mockSession', JSON.stringify(mockSession));
+  console.log('🔥 Mock 세션 생성:', mockSession);
+
+  // 🔥 BACK_USER_API와 동일한 응답 구조
   return {
     success: true,
     message: '로그인 성공',
     data: {
-      token: mockJwtToken,
       user: {
-        id: user.mmemId,
+        loginId: user.mmemId,
+        nick: user.mmemNick,
+        ppnt: user.mmemPnt,
+        // regd, bir, pphoto는 로그인 시 제공 안함 (백엔드와 동일)
+      },
+    },
+  };
+};
+
+//? 회원가입 API - 백엔드와 동일한 구조
+const register = async (userData) => {
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+
+  const { id, password, nickname, birthDate, profilePhoto } = userData;
+
+  // 중복 확인
+  const existingUser = MOCKDATA.mockUserData.find(
+    (u) => u.mmemId === id || u.mmemNick === nickname,
+  );
+
+  if (existingUser) {
+    if (existingUser.mmemId === id) {
+      throw new Error('이미 존재하는 ID');
+    }
+    if (existingUser.mmemNick === nickname) {
+      throw new Error('이미 존재하는 닉네임');
+    }
+  }
+
+  const newUser = {
+    mmemId: id,
+    mmemPw: password,
+    mmemNick: nickname,
+    mmemBir: new Date(birthDate),
+    mmemRegd: new Date(),
+    mmemPnt: 100,
+    mmemPphoto: profilePhoto || null,
+  };
+
+  MOCKDATA.mockUserData.push(newUser);
+
+  // 🔥 BACK_USER_API와 동일한 응답 구조
+  return {
+    success: true,
+    message: '회원가입 완료',
+  };
+};
+
+//? 사용자 세션 검증 API - sessionStorage로 세션 체크
+const verifyUser = async (userId) => {
+  await new Promise((resolve) => setTimeout(resolve, 300));
+
+  // 🔥 sessionStorage에서 Mock 세션 확인
+  const mockSession = sessionStorage.getItem('mockSession');
+
+  if (!mockSession) {
+    console.log('❌ Mock 세션 없음');
+    throw new Error('세션 만료');
+  }
+
+  try {
+    const sessionData = JSON.parse(mockSession);
+
+    // 🔥 요청한 userId와 세션의 userId 비교 (실제 백엔드와 동일한 검증)
+    if (sessionData.userId !== userId) {
+      console.log('❌ Mock 세션 userId 불일치:', sessionData.userId, '!=', userId);
+      throw new Error('세션 만료');
+    }
+
+    // 🔥 세션 만료 시간 체크 (1시간)
+    if (Date.now() - sessionData.loginTime > 60 * 60 * 1000) {
+      console.log('❌ Mock 세션 시간 만료');
+      sessionStorage.removeItem('mockSession');
+      throw new Error('세션 만료');
+    }
+
+    // 🔥 사용자 정보 조회
+    const user = MOCKDATA.mockUserData.find((u) => u.mmemId === userId);
+
+    if (!user) {
+      console.log('❌ 사용자 정보 없음');
+      throw new Error('세션 만료');
+    }
+
+    // 🔥 BACK_USER_API와 동일한 응답 구조
+    return {
+      success: true,
+      data: {
+        user: {
+          loginId: user.mmemId,
+          nick: user.mmemNick,
+          ppnt: user.mmemPnt,
+          // 세션 검증 시에도 기본 정보만 제공
+        },
+      },
+    };
+  } catch (error) {
+    console.log('❌ Mock 세션 파싱 에러');
+    sessionStorage.removeItem('mockSession');
+    throw new Error('세션 만료');
+  }
+};
+
+//? 이메일 인증코드 발송 API - 백엔드와 동일한 구조
+const sendVerificationEmail = async (email) => {
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  console.log('📧 Mock 이메일 인증코드 발송:', email);
+
+  return {
+    success: true,
+    message: '인증코드가 발송되었습니다.',
+  };
+};
+
+//? 이메일 인증코드 확인 API - 백엔드와 동일한 구조
+const verifyEmailCode = async (email, code) => {
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  console.log('🔐 Mock 이메일 인증코드 확인:', email, code);
+
+  // Mock에서는 항상 성공
+  return {
+    success: true,
+    message: '이메일 인증이 완료되었습니다.',
+  };
+};
+
+//? 아이디 중복 확인 API - 백엔드와 동일한 구조
+const checkIdDuplicate = async (id) => {
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  const exists = MOCKDATA.mockUserData.some((u) => u.mmemId === id);
+
+  // 🔥 BACK_USER_API와 동일한 응답 구조
+  return {
+    success: true,
+    available: !exists,
+    message: exists ? '이미 사용 중 아이디' : '사용 가능 아이디',
+  };
+};
+
+//? 닉네임 중복 확인 API - 백엔드와 동일한 구조
+const checkNicknameDuplicate = async (nickname) => {
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  const exists = MOCKDATA.mockUserData.some((u) => u.mmemNick === nickname);
+
+  // 🔥 BACK_USER_API와 동일한 응답 구조
+  return {
+    success: true,
+    available: !exists,
+    message: exists ? '이미 사용중 닉네임' : '사용 가능 닉네임',
+  };
+};
+
+//? 회원정보 수정 API - 세션 기반으로 사용자 식별
+const updateUserInfo = async (userId, updateData, currentPassword) => {
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+
+  // 🔥 세션에서 현재 로그인 사용자 확인
+  const mockSession = sessionStorage.getItem('mockSession');
+  if (!mockSession) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
+  const sessionData = JSON.parse(mockSession);
+  const currentUserId = sessionData.userId;
+
+  // 🔥 요청한 userId와 세션의 userId가 일치하는지 확인
+  if (currentUserId !== userId) {
+    throw new Error('권한이 없습니다.');
+  }
+
+  const userIndex = MOCKDATA.mockUserData.findIndex((u) => u.mmemId === userId);
+
+  if (userIndex === -1) {
+    throw new Error('사용자를 찾을 수 없습니다.');
+  }
+
+  const user = MOCKDATA.mockUserData[userIndex];
+
+  // 현재 비밀번호 확인
+  if (user.mmemPw !== currentPassword) {
+    throw new Error('현재 비밀번호가 올바르지 않습니다.');
+  }
+
+  // 닉네임 중복 확인 (변경하는 경우에만)
+  if (updateData.nickname && updateData.nickname !== user.mmemNick) {
+    const nicknameExists = MOCKDATA.mockUserData.some(
+      (u) => u.mmemNick === updateData.nickname && u.mmemId !== userId,
+    );
+
+    if (nicknameExists) {
+      throw new Error('이미 사용중인 닉네임입니다.');
+    }
+  }
+
+  // 정보 업데이트
+  const updatedUser = { ...user };
+
+  if (updateData.nickname) {
+    updatedUser.mmemNick = updateData.nickname;
+  }
+
+  if (updateData.password) {
+    updatedUser.mmemPw = updateData.password;
+  }
+
+  if (updateData.profilePhoto !== undefined) {
+    updatedUser.mmemPphoto = updateData.profilePhoto;
+  }
+
+  MOCKDATA.mockUserData[userIndex] = updatedUser;
+
+  // 🔥 BACK_USER_API와 동일한 응답 구조
+  return {
+    success: true,
+    message: '회원정보가 수정되었습니다.',
+    data: {
+      user: {
+        loginId: updatedUser.mmemId,
+        nick: updatedUser.mmemNick,
+        ppnt: updatedUser.mmemPnt,
+        regd: updatedUser.mmemRegd,
+        bir: updatedUser.mmemBir,
+        pphoto: updatedUser.mmemPphoto,
+      },
+    },
+  };
+};
+
+//? 회원탈퇴 API - 세션 기반으로 사용자 식별 (password만 파라미터)
+const deleteAccount = async (password) => {
+  await new Promise((resolve) => setTimeout(resolve, 700));
+
+  // 🔥 세션에서 현재 로그인 사용자 확인
+  const mockSession = sessionStorage.getItem('mockSession');
+  if (!mockSession) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
+  const sessionData = JSON.parse(mockSession);
+  const currentUserId = sessionData.userId;
+
+  const user = MOCKDATA.mockUserData.find((u) => u.mmemId === currentUserId);
+
+  if (!user) {
+    throw new Error('사용자를 찾을 수 없습니다.');
+  }
+
+  if (user.mmemPw !== password) {
+    throw new Error('비밀번호가 올바르지 않습니다.');
+  }
+
+  // 사용자 삭제
+  const userIndex = MOCKDATA.mockUserData.findIndex((u) => u.mmemId === currentUserId);
+  if (userIndex !== -1) {
+    MOCKDATA.mockUserData.splice(userIndex, 1);
+  }
+
+  // 🔥 세션 삭제 (로그아웃 처리)
+  sessionStorage.removeItem('mockSession');
+  console.log('🔥 Mock 세션 삭제 (회원탈퇴)');
+
+  // 🔥 BACK_USER_API와 동일한 응답 구조
+  return {
+    success: true,
+    message: '회원탈퇴 완료.',
+  };
+};
+
+//? 사용자 정보 조회 API - 세션 기반 검증 추가
+const getUserInfo = async (userId) => {
+  await new Promise((resolve) => setTimeout(resolve, 600));
+
+  // 🔥 세션에서 현재 로그인 사용자 확인
+  const mockSession = sessionStorage.getItem('mockSession');
+  if (!mockSession) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
+  const sessionData = JSON.parse(mockSession);
+  const currentUserId = sessionData.userId;
+
+  // 🔥 요청한 userId와 세션의 userId가 일치하는지 확인
+  if (currentUserId !== userId) {
+    throw new Error('권한이 없습니다.');
+  }
+
+  const user = MOCKDATA.mockUserData.find((u) => u.mmemId === userId);
+
+  if (!user) {
+    throw new Error('사용자 정보 찾을 수 없음');
+  }
+
+  // 🔥 BACK_USER_API와 동일한 응답 구조
+  return {
+    success: true,
+    data: {
+      user: {
+        loginId: user.mmemId,
         nick: user.mmemNick,
         ppnt: user.mmemPnt,
         regd: user.mmemRegd,
@@ -44,339 +341,61 @@ const login = async (credentials) => {
   };
 };
 
-// 회원가입 mockAPI
-const register = async (userData) => {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  const { id, nickname, password, birthDate } = userData;
-
-  // 중복 검사
-  const existingUser = MOCKDATA.mockUserData.find(
-    (u) => u.mmemId === id && u.mmemNick === nickname,
-  );
-
-  if (existingUser) {
-    if (existingUser.id === id) {
-      throw new Error('이미 존재하는 ID');
-    }
-    if (existingUser.nick === nickname) {
-      throw new Error('이미 존재하는 nick');
-    }
-  }
-
-  const newUser = {
-    id: id,
-    pw: password,
-    nick: nickname,
-    pphoto: null,
-    regd: new Date().toISOString(),
-    bir: birthDate,
-    ppnt: 100,
-  };
-
-  MOCKDATA.mockUserData.push(newUser);
-
-  return {
-    success: true,
-    message: '회원가입 완료',
-    data: { userId: newUser.id },
-  };
-};
-
-// 토큰 검증
-const verifyToken = async (token) => {
-  await new Promise((resolve) => setTimeout(resolve, 300));
-
-  if (!token || !token.startsWith('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9')) {
-    throw new Error('토큰 유효X');
-  }
-
-  try {
-    // JWT 메이로등 디코딩
-    const payloadBase64 = token.split('.')[1];
-    const payload = JSON.parse(atob(payloadBase64));
-
-    // 토큰 만료 확인
-    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
-      throw new Error('토큰 만료됨');
-    }
-
-    // 사용자 정보 조회
-    const user = MOCKDATA.mockUserData.find((u) => u.id === payload.sub);
-
-    if (!user) {
-      throw new Error('사용자를 찾을 수 없음');
-    }
-
-    return {
-      success: true,
-      data: {
-        user: {
-          id: user.id,
-          nick: user.nick,
-          points: user.ppnt,
-          registeredDate: user.regd,
-          birthDate: user.bir,
-          profilePhoto: user.pphoto,
-        },
-      },
-    };
-  } catch (error) {
-    throw new Error('토큰 검증 실패 ', error);
-  }
-};
-
-const sendVerificationEmail = async (email) => {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  // 이메일 형식 검증
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    throw new Error('올바른 이메일 형식이 아닙니다.');
-  }
-
-  // 인증 코드 생성
-  const verificationCode = Math.floor(100000 + Math.random() * 900000);
-
-  // 인증 코드 임시 저장
-  const verificationData = {
-    email: email,
-    code: verificationCode.toString(),
-    createdAt: new Date().getTime(),
-    expiresAt: new Date().getTime() + 5 * 60 * 1000, // 5분 후에 만료
-  };
-
-  // 저장소에 저장 (실제 환경에선 메모리에 사용)
-  if (!window.mockVerificationCodes) {
-    window.mockVerificationCodes = [];
-  }
-
-  // 기존 코드 삭제 후 새 코드 저장
-  window.mockVerificationCodes = window.mockVerificationCodes.filter((v) => v.email !== email);
-  window.mockVerificationCodes.push(verificationData);
-
-  console.log(`Mock 이메일 인증코드 ${verificationCode}(실제는 이메일로 전송)`);
-
-  return {
-    success: true,
-    message: '인증코드 전송',
-    __dev_code: verificationCode, // 인증코드 (실제 출력은 하면 안됨)
-  };
-};
-
-// 이메일 인증코드 확인 USER_API
-const verifyEmailCode = async (email, code) => {
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  if (!window.mockVerificationCodes) {
-    throw new Error('발송된 인증코드 X');
-  }
-
-  // 해당 이메일의 인증 코드 찾기
-  const verification = window.mockVerificationCodes.find((v) => v.email === email);
-
-  if (!verification) {
-    throw new Error('인증 코드를 먼저 요청');
-  }
-
-  // 인증 시간 만료 확인
-  if (new Date().getTime() > verification.expiresAt) {
-    // 만료된 코드 삭제 (코드 상으로 인증코드 여러번 보냈을 때, 처음 코드가 만료되면 그 뒤에 거 다 사라지는 상황 되긴함)
-    window.mockVerificationCodes = window.mockVerificationCodes.filter((v) => v.email !== email);
-    throw new Error('인증코드 만료');
-  }
-
-  if (verification.code !== code.toString()) {
-    throw new Error('인증코드 올바르지 않음');
-  }
-
-  window.mockVerificationCodes = window.mockVerificationCodes.filter((v) => v.email !== email);
-
-  return {
-    success: true,
-    message: '이메일 인증 완료',
-  };
-};
-
-// 아이디 중복 확인
-const checkIdDuplicate = async (id) => {
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  const exists = MOCKDATA.mockUserData.some((u) => u.mmemId === id);
-
-  return {
-    success: true,
-    available: !exists,
-    message: exists ? '이미 존재하는 아이디' : '사용 가능한 아이디',
-  };
-};
-
-// 닉네임 중복 확인
-const checkNicknameDuplicate = async (nickname) => {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  const exists = MOCKDATA.mockUserData.some((u) => u.mmemNick === nickname);
-
-  return {
-    success: true,
-    available: !exists,
-    message: exists ? '이미 사용중인 닉네임' : '사용 가능한 닉네임',
-  };
-};
-
-// 회원정보 수정
-const updateUserInfo = async (userId, updateData) => {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  // 사용자 찾기
-  const userIndex = MOCKDATA.mockUserData.findIndex((u) => u.mmemId === userId);
-
-  if (userIndex === -1) {
-    throw new Error('사용자를 찾을 수 없음');
-  }
-
-  const user = MOCKDATA.mockUserData[userIndex];
-
-  // 닉네임 중복 확인 (현재 사용자 제외)
-  if (updateData.nickname && updateData.nickname !== user.nick) {
-    const nicknameExists = MOCKDATA.mockUserData.some(
-      (u) => u.mmemNick === updateData.nickname && u.mmemId !== userId,
-    );
-
-    if (nicknameExists) {
-      throw new Error('이미 사용중인 닉네임입니다');
-    }
-  }
-
-  // 사용자 정보 업데이트
-  const updatedUser = { ...user };
-
-  if (updateData.nickname) {
-    updatedUser.nick = updateData.nickname;
-  }
-
-  if (updateData.password) {
-    updatedUser.pw = updateData.password;
-  }
-
-  if (updateData.profilePhoto !== undefined) {
-    updatedUser.pphoto = updateData.profilePhoto;
-  }
-
-  // Mock 데이터 업데이트
-  MOCKDATA.mockUserData[userIndex] = updatedUser;
-
-  console.log(`회원정보 수정 완료: ${userId}`, updatedUser);
-
-  return {
-    success: true,
-    message: '회원정보가 성공적으로 수정되었습니다',
-    data: {
-      user: {
-        id: updatedUser.id,
-        nick: updatedUser.nick,
-        ppnt: updatedUser.ppnt,
-        regd: updatedUser.regd,
-        bir: updatedUser.bir,
-        pphoto: updatedUser.pphoto,
-      },
-    },
-  };
-};
-
-// 회원탈퇴
-const deleteAccount = async (userId, password) => {
-  await new Promise((resolve) => setTimeout(resolve, 700));
-
-  // 사용자 찾기
-  const userIndex = MOCKDATA.mockUserData.findIndex((u) => u.mmemId === userId);
-
-  if (userIndex === -1) {
-    throw new Error('사용자 찾을 수 없음');
-  }
-
-  const user = MOCKDATA.mockUserData[userIndex];
-
-  // 비밀번호 확인
-  if (user.pw !== password) {
-    throw new Error('비밀번호 올바르지 않음');
-  }
-
-  // 사용자 데이터 삭제
-  MOCKDATA.mockUserData.splice(userIndex, 1);
-
-  // 관련 데이터도 삭제
-  MOCKDATA.mockExpenseData = MOCKDATA.mockExpenseData.filter((exp) => exp.mexpMmemId !== userId);
-
-  console.log(`회원탈퇴 완료: ${userId}`);
-
-  return {
-    success: true,
-    message: '회원탈퇴 완료',
-  };
-};
-
-// 사용자 정보 조회
-const getUserInfo = async (userId) => {
-  await new Promise((resolve) => setTimeout(resolve, 600));
-
-  const user = MOCKDATA.mockUserData.find((u) => u.mmemId === userId);
-
-  if (!user) {
-    throw new Error('사용자 찾을 수 없음');
-  }
-
-  return {
-    success: true,
-    data: {
-      user: {
-        id: user.id,
-        nickname: user.nick,
-        points: user.ppnt,
-        registeredDate: user.regd,
-        birthDate: user.bir,
-        profilePhoto: user.pphoto,
-      },
-    },
-  };
-};
-
+//? 로그아웃 API - sessionStorage에서 세션 삭제
 const logout = async () => {
   await new Promise((resolve) => setTimeout(resolve, 300));
 
+  // 🔥 Mock 세션 삭제 (실제 백엔드의 session.invalidate()와 동일)
+  sessionStorage.removeItem('mockSession');
+  console.log('🚪 Mock 세션 삭제 (로그아웃)');
+
+  // 🔥 BACK_USER_API와 동일한 응답 구조
   return {
     success: true,
-    message: '로그아웃 되었음',
+    message: '로그아웃',
   };
 };
 
-// 현재 로그인한 사용자의 비밀번호 확인
+//? 비밀번호 확인 API - 세션 기반 검증 추가
 const verifyPassword = async (userId, password) => {
   await new Promise((resolve) => setTimeout(resolve, 500));
 
-  // 사용자 찾기
+  // 🔥 세션에서 현재 로그인 사용자 확인
+  const mockSession = sessionStorage.getItem('mockSession');
+  if (!mockSession) {
+    throw new Error('로그인이 필요합니다.');
+  }
+
+  const sessionData = JSON.parse(mockSession);
+  const currentUserId = sessionData.userId;
+
+  // 🔥 요청한 userId와 세션의 userId가 일치하는지 확인
+  if (currentUserId !== userId) {
+    throw new Error('권한이 없습니다.');
+  }
+
   const user = MOCKDATA.mockUserData.find((u) => u.mmemId === userId);
 
   if (!user) {
-    throw new Error('사용자를 찾을 수 없음');
+    throw new Error('사용자를 찾을 수 없습니다.');
   }
 
-  // 비밀번호 확인
-  if (user.pw !== password) {
-    throw new Error('비밀번호가 올바르지 않습니다');
+  if (user.mmemPw !== password) {
+    throw new Error('비밀번호가 올바르지 않습니다.');
   }
 
+  // 🔥 BACK_USER_API와 동일한 응답 구조
   return {
     success: true,
-    message: '비밀번호 확인 완료',
+    message: '비밀번호 확인이 완료되었습니다.',
   };
 };
 
-const USER_API = {
-  // 로그인 관련 mock api
+// ✅ BACK_USER_API와 100% 동일한 구조로 export
+const MOCK_USER_API = {
   login,
   register,
-  verifyToken,
+  verifyUser,
   sendVerificationEmail,
   verifyEmailCode,
   checkIdDuplicate,
@@ -388,4 +407,4 @@ const USER_API = {
   verifyPassword,
 };
 
-export default USER_API;
+export default MOCK_USER_API;
