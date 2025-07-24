@@ -4,141 +4,163 @@ import 'react-calendar/dist/Calendar.css';
 import '../css/AccountBook.css';
 import noExpImg from '../img/no_exp.png';
 
+const BASE_URL = 'http://192.168.0.4:7474';
+const MEMBER_ID = 'hhhh234';
+
 const AccountBookPage = () => {
   const [date, setDate] = useState(new Date());
   const [type, setType] = useState('');
   const [amount, setAmount] = useState('');
+  const [memo, setMemo] = useState('');
   const [customCategory, setCustomCategory] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [memo, setMemo] = useState('');
-  const [categories, setCategories] = useState(['식비', '교통비', '생활비']);
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [entries, setEntries] = useState({ income: [], expense: [] });
-  const [editingId, setEditingId] = useState(null);
+  const [editTarget, setEditTarget] = useState(null);
+  const [repeat, setRepeat] = useState(false);
 
-  const MOCK_API_URL = 'https://687cf065918b6422433083ae.mockapi.io/entries';
-  const CATEGORY_API_URL = 'https://687cf065918b6422433083ae.mockapi.io/category';
+  const formatDateKey = (d) => {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
 
-  const formatDateKey = (d) => d.toISOString().split('T')[0];
-
-  const fetchDataByDate = async (targetDate) => {
-    const key = formatDateKey(targetDate);
+  const fetchCategories = async () => {
     try {
-      const res = await fetch(MOCK_API_URL);
+      const res = await fetch(`${BASE_URL}/categories/member/${MEMBER_ID}`);
       const data = await res.json();
-      const filtered = data.filter((e) => e.date === key);
-      const income = filtered.filter((e) => e.type === '수입');
-      const expense = filtered.filter((e) => e.type === '지출');
-      setEntries({ income, expense });
+      if (Array.isArray(data)) setCategories(data);
     } catch (err) {
-      console.error('불러오기 실패:', err);
+      console.error('❌ 카테고리 불러오기 실패:', err);
+    }
+  };
+
+  const fetchEntriesByDate = async (targetDate) => {
+    const dateStr = formatDateKey(targetDate);
+    try {
+      const res = await fetch(
+        `${BASE_URL}/expenses/member/${MEMBER_ID}/by-date-range?startDate=${dateStr}&endDate=${dateStr}`,
+      );
+      const data = await res.json();
+      setEntries({
+        income: data.filter((e) => e.mexpType === 'I'),
+        expense: data.filter((e) => e.mexpType === 'E'),
+      });
+    } catch (err) {
+      console.error('❌ 수입지출 불러오기 실패:', err);
     }
   };
 
   useEffect(() => {
-    fetchDataByDate(date);
-  }, [date]);
-
-  useEffect(() => {
-    fetch(CATEGORY_API_URL)
-      .then((res) => res.json())
-      .then((data) => {
-        const names = data.map((c) => c.name);
-        setCategories(names);
-      })
-      .catch((err) => console.error('카테고리 불러오기 실패:', err));
+    fetchCategories();
+    fetchEntriesByDate(date);
   }, []);
 
+  const handleDateChange = (d) => {
+    setDate(d);
+    fetchEntriesByDate(d);
+  };
+
   const handleSave = async () => {
-    if (!type || !amount || Number(amount) <= 0 || selectedCategories.length === 0) {
-      alert('모든 항목을 올바르게 입력해주세요.');
+    console.log('💾 저장 직전 메모:', memo);
+    if (!type || !amount || !selectedCategoryId || Number(amount) <= 0 || memo.trim() === '') {
+      alert('⚠️ 모든 항목을 입력해주세요.');
       return;
     }
 
-    const entry = {
-      date: formatDateKey(date),
-      type,
-      amount: Number(amount),
-      category: selectedCategories,
-      memo,
+    const payload = {
+      mexpDt: formatDateKey(date),
+      mexpAmt: Number(amount),
+      mexpDec: memo,
+      mexpType: type === '수입' ? 'I' : 'E',
+      mexpRpt: repeat ? 'T' : 'F',
+      mexpStatus: 'COMPLETED',
+      memberId: MEMBER_ID,
     };
-
     try {
-      let res;
-      if (editingId) {
-        res = await fetch(`${MOCK_API_URL}/${editingId}`, {
+      if (editTarget) {
+        await fetch(`${BASE_URL}/expenses/member/${MEMBER_ID}?mcatId=${selectedCategoryId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(entry),
+          body: JSON.stringify({
+            ...payload,
+            mexpId: editTarget.mexpId,
+          }),
         });
       } else {
-        res = await fetch(MOCK_API_URL, {
+        await fetch(`${BASE_URL}/expenses/member/${MEMBER_ID}?mcatId=${selectedCategoryId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(entry),
+          body: JSON.stringify(payload),
         });
       }
-
-      if (!res.ok) throw new Error('저장 실패');
 
       setType('');
       setAmount('');
       setMemo('');
-      setSelectedCategories([]);
-      setEditingId(null);
-      fetchDataByDate(date);
+      setSelectedCategoryId(null);
+      setEditTarget(null);
+      fetchEntriesByDate(date);
     } catch (err) {
-      console.error(err);
-      alert('⚠️ 저장 중 오류 발생');
+      console.error('❌ 저장 실패:', err);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('정말 삭제할까요?')) return;
+  const handleDelete = async (entryId) => {
+    if (!entryId) return;
+    const confirmed = window.confirm('정말 삭제하시겠습니까?');
+    if (!confirmed) return;
     try {
-      await fetch(`${MOCK_API_URL}/${id}`, { method: 'DELETE' });
-      fetchDataByDate(date);
+      const res = await fetch(`${BASE_URL}/expenses/${entryId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('삭제 실패');
+      fetchEntriesByDate(date);
     } catch (err) {
-      console.error('삭제 오류:', err);
+      console.error('❌ 삭제 실패:', err);
     }
   };
 
   const handleEdit = (entry) => {
-    setType(entry.type);
-    setAmount(entry.amount);
-    setSelectedCategories(entry.category);
-    setMemo(entry.memo);
-    setEditingId(entry.id);
-    setDate(new Date(entry.date));
+    setEditTarget(entry);
+    setType(entry.mexpType === 'I' ? '수입' : '지출');
+    setAmount(entry.mexpAmt.toString());
+    setMemo(entry.mexpDec);
+    setSelectedCategoryId(entry.category?.mcatId || null);
+    setDate(new Date(entry.mexpDt));
   };
 
-  const addCustomCategory = async () => {
-    if (customCategory && !categories.includes(customCategory)) {
-      try {
-        await fetch(CATEGORY_API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: customCategory }),
-        });
-
-        setCategories([...categories, customCategory]);
-        setCustomCategory('');
-        setShowModal(false);
-      } catch (err) {
-        console.error('카테고리 저장 실패:', err);
-      }
+  const handleAddCategory = async () => {
+    if (!customCategory.trim()) return;
+    try {
+      await fetch(`${BASE_URL}/categories`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mcatName: customCategory,
+          mcatColor: '#AAAAAA',
+          mcatId: Date.now().toString(),
+          memberId: MEMBER_ID,
+        }),
+      });
+      setCustomCategory('');
+      setShowModal(false);
+      fetchCategories();
+    } catch (err) {
+      console.error('❌ 카테고리 추가 실패:', err);
     }
   };
 
-  const removeCategory = (catToRemove) => {
-    setCategories(categories.filter((cat) => cat !== catToRemove));
-    setSelectedCategories(selectedCategories.filter((cat) => cat !== catToRemove));
-  };
-
-  const toggleCategory = (cat) => {
-    setSelectedCategories((prev) =>
-      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat],
-    );
+  const handleDeleteCategory = async (mcatId) => {
+    try {
+      await fetch(`${BASE_URL}/categories/${mcatId}`, { method: 'DELETE' });
+      fetchCategories();
+      if (selectedCategoryId === mcatId) setSelectedCategoryId(null);
+    } catch (err) {
+      console.error('❌ 카테고리 삭제 실패:', err);
+    }
   };
 
   const formatDate = (d) => `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
@@ -149,45 +171,31 @@ const AccountBookPage = () => {
       <div className="ledger-grid">
         <div className="ledger-left">
           <p className="ledger-date">{formatDate(date)}</p>
-          <Calendar value={date} onChange={(newDate) => setDate(newDate)} />
+          <Calendar value={date} onChange={handleDateChange} />
 
-          <div className="ledger-entry-box">
-            <h4>수입</h4>
-            {entries.income.length > 0 ? (
-              entries.income.map((e) => (
-                <div key={e.id} className="entry income">
-                  <span>{e.amount.toLocaleString()} 원</span>
-                  <span className="tag">#{e.category?.join(', ')}</span>
-                  <button onClick={() => handleEdit(e)}>수정</button>
-                  <button onClick={() => handleDelete(e.id)}>삭제</button>
+          {[
+            { title: '수입', key: 'income' },
+            { title: '지출', key: 'expense' },
+          ].map((section) => (
+            <div className="ledger-entry-box" key={section.key}>
+              <h4>{section.title}</h4>
+              {entries[section.key].length > 0 ? (
+                entries[section.key].map((e) => (
+                  <div key={e.mexpId} className={`entry ${section.key}`}>
+                    <span>{e.mexpAmt.toLocaleString()} 원</span>
+                    <span className="tag">#{e.category?.mcatName}</span>
+                    <button onClick={() => handleEdit(e)}>수정</button>
+                    <button onClick={() => handleDelete(e.mexpId)}>삭제</button>
+                  </div>
+                ))
+              ) : (
+                <div className="entry empty">
+                  <img src={noExpImg} alt="내역 없음" height={60} />
+                  <span>{section.title} 내역이 없습니다</span>
                 </div>
-              ))
-            ) : (
-              <div className="entry empty">
-                <img src={noExpImg} alt="수입 없음" height={60} />
-                <span>수입 내역이 없습니다</span>
-              </div>
-            )}
-          </div>
-
-          <div className="ledger-entry-box">
-            <h4>지출</h4>
-            {entries.expense.length > 0 ? (
-              entries.expense.map((e) => (
-                <div key={e.id} className="entry expense">
-                  <span>{e.amount.toLocaleString()} 원</span>
-                  <span className="tag">#{e.category?.join(', ')}</span>
-                  <button onClick={() => handleEdit(e)}>✏</button>
-                  <button onClick={() => handleDelete(e.id)}>🗑</button>
-                </div>
-              ))
-            ) : (
-              <div className="entry empty">
-                <img src={noExpImg} alt="지출 없음" height={60} />
-                <span>지출 내역이 없습니다</span>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          ))}
         </div>
 
         <div className="ledger-right">
@@ -209,17 +217,25 @@ const AccountBookPage = () => {
               onChange={(e) => setAmount(e.target.value)}
             />
           </label>
+          <div className="repeat-checkbox">
+            <label htmlFor="repeat">💡 반복되는 지출인가요?</label>
+            <input
+              id="repeat"
+              type="checkbox"
+              checked={repeat}
+              onChange={(e) => setRepeat(e.target.checked)}
+            />
+          </div>
 
           <label>카테고리 선택</label>
           <div className="category-list">
             {categories.map((cat) => (
               <div
-                key={cat}
-                className={`category-item ${selectedCategories.includes(cat) ? 'selected' : ''}`}
-                onClick={() => toggleCategory(cat)}
+                key={cat.mcatId}
+                className={`category-item ${selectedCategoryId === cat.mcatId ? 'selected' : ''}`}
               >
-                <span>{cat}</span>
-                <span className="remove-btn" onClick={() => removeCategory(cat)}>
+                <span onClick={() => setSelectedCategoryId(cat.mcatId)}>{cat.mcatName}</span>
+                <span className="remove-btn" onClick={() => handleDeleteCategory(cat.mcatId)}>
                   ✕
                 </span>
               </div>
@@ -229,32 +245,29 @@ const AccountBookPage = () => {
             </div>
           </div>
 
-          <div className="selected-tags">
-            {selectedCategories.map((cat, i) => (
-              <span key={i} className="tag">
-                #{cat}
-                <button
-                  className="tag-remove"
-                  onClick={() => setSelectedCategories(selectedCategories.filter((c) => c !== cat))}
-                >
-                  ✕
-                </button>
+          {selectedCategoryId && (
+            <div className="selected-tag">
+              <span className="tag">
+                #{categories.find((cat) => cat.mcatId === selectedCategoryId)?.mcatName}
               </span>
-            ))}
-          </div>
+              <button className="tag-remove" onClick={() => setSelectedCategoryId(null)}>
+                ✕
+              </button>
+            </div>
+          )}
 
           <label>
             메모
             <textarea
-              placeholder="메모를 작성하세요"
+              placeholder="메모를 작성하세요 📊 작성하신 메모로 AI가 분석해드려요!"
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
             />
           </label>
 
           <div className="ledger-buttons">
-            <button onClick={handleSave} className="save">
-              {editingId ? '수정하기' : '저장'}
+            <button className="save" onClick={handleSave}>
+              {editTarget ? '수정 완료' : '저장'}
             </button>
             <button
               className="delete"
@@ -262,8 +275,8 @@ const AccountBookPage = () => {
                 setType('');
                 setAmount('');
                 setMemo('');
-                setSelectedCategories([]);
-                setEditingId(null);
+                setSelectedCategoryId(null);
+                setEditTarget(null);
               }}
             >
               취소
@@ -281,7 +294,7 @@ const AccountBookPage = () => {
             placeholder="새 카테고리 입력"
           />
           <div className="modal-buttons">
-            <button onClick={addCustomCategory} className="save">
+            <button onClick={handleAddCategory} className="save">
               저장
             </button>
             <button onClick={() => setShowModal(false)} className="cancel">
