@@ -1,9 +1,13 @@
+import React, { useState } from 'react';
 import { Apexcharts } from '@components/Apexcharts';
 import MyCalendar from '@components/MyCalendar';
 import CategoryChart from '@components/CategoryChart';
 import chatImg from '@img/chatbotmooney.png';
+import ChatBotModal from '@components/ChatBotModal';
 
 function HomePage() {
+  const [showChatModal, setShowChatModal] = useState(false);
+
   return (
     <div
       style={{
@@ -15,14 +19,8 @@ function HomePage() {
         minHeight: '100vh',
       }}
     >
-      {/* 왼쪽 컬럼 - 달력 */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
+      {/* 왼쪽 컬럼 */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <div
           style={{
             width: '574px',
@@ -38,7 +36,7 @@ function HomePage() {
         </div>
       </div>
 
-      {/* 오른쪽 컬럼 - 카드들 */}
+      {/* 오른쪽 컬럼 */}
       <div
         style={{
           display: 'flex',
@@ -73,37 +71,11 @@ function HomePage() {
             e.currentTarget.style.boxShadow = '0px 4px 4px rgba(0, 0, 0, 0.25)';
           }}
         >
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-            }}
-          >
-            <div
-              style={{
-                fontWeight: 'bold',
-                fontSize: '18px',
-                margin: '30px 0 8px 0',
-              }}
-            >
-              수입
-            </div>
-            <div
-              style={{
-                fontSize: '30px',
-                color: '#3C82F6',
-              }}
-            >
-              20,000원
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+            <div style={{ fontWeight: 'bold', fontSize: '18px', margin: '30px 0 8px 0' }}>수입</div>
+            <div style={{ fontSize: '30px', color: '#3C82F6' }}>20,000원</div>
           </div>
-          <div
-            style={{
-              width: '120px',
-              height: '120px',
-            }}
-          >
+          <div style={{ width: '120px', height: '120px' }}>
             <Apexcharts win={70} defeat={30} />
           </div>
         </div>
@@ -134,45 +106,20 @@ function HomePage() {
             e.currentTarget.style.boxShadow = '0px 4px 4px rgba(0, 0, 0, 0.25)';
           }}
         >
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-            }}
-          >
-            <div
-              style={{
-                fontWeight: 'bold',
-                fontSize: '18px',
-                margin: '30px 0 8px 0',
-              }}
-            >
-              지출
-            </div>
-            <div
-              style={{
-                fontSize: '30px',
-                color: '#FF4D4D',
-              }}
-            >
-              2,000원
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+            <div style={{ fontWeight: 'bold', fontSize: '18px', margin: '30px 0 8px 0' }}>지출</div>
+            <div style={{ fontSize: '30px', color: '#FF4D4D' }}>2,000원</div>
           </div>
-          <div
-            style={{
-              width: '120px',
-              height: '120px',
-
-            }}
-          >
+          <div style={{ width: '120px', height: '120px' }}>
             <Apexcharts win={70} defeat={30} />
           </div>
         </div>
 
         {/* 챗봇 무니 카드 */}
         <div
+          onClick={() => setShowChatModal(true)}
           style={{
+            cursor: 'pointer',
             position: 'relative',
             height: '170px',
             width: '342px',
@@ -207,10 +154,8 @@ function HomePage() {
               <br />
               목표에 맞을까요?
             </p>
-            {/* 말풍선 꼬리 */}
             <div
               style={{
-                content: '',
                 position: 'absolute',
                 right: '-12px',
                 bottom: '20px',
@@ -232,6 +177,9 @@ function HomePage() {
           />
         </div>
       </div>
+
+      {/* 모달 컴포넌트 */}
+      {showChatModal && <ChatBotModal onClose={() => setShowChatModal(false)} />}
     </div>
   );
 }
