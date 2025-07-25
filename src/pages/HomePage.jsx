@@ -34,7 +34,7 @@ function HomePage() {
           <MyCalendar />
           <CategoryChart />
         </div>
-
+      </div>
       {/* 오른쪽 컬럼 */}
       <div
         style={{
