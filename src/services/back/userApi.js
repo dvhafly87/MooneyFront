@@ -1,9 +1,6 @@
-//! 로그인, 회원가입, 토큰 검증, 이메일 인증코드 보내기, 이메일 받은 인증코드 검증, 아이디 중복검사, 닉네임 중복검사,
-//! 회원정보 수정, 회원탈퇴, 회원정보 가져오기, 로그아웃
-
 const SERVER_URL = import.meta.env.VITE_API_BASE_URL;
 
-// ✅ 로그인 API
+//? 로그인 API - 세션 기반 (localStorage 사용 안함)
 const login = async (credentials) => {
   const logindata = {
     loginId: credentials.id,
@@ -18,7 +15,7 @@ const login = async (credentials) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include', // 쿠키 포함
+      credentials: 'include', // 🔥 쿠키 기반 세션 사용
       body: JSON.stringify(logindata),
     });
 
@@ -32,18 +29,18 @@ const login = async (credentials) => {
     console.log('✅ 백엔드 응답:', result);
 
     if (result.isLogined) {
+      // 🔥 세션은 서버에서 자동으로 설정됨 - 클라이언트에서는 저장하지 않음
       return {
         success: true,
         message: '로그인 성공',
         data: {
-          token: result.token,
           user: {
-            id: result.userInfo.mmemId || result.userInfo.id,
-            nick: result.userInfo.mmemNick || result.userInfo.nick,
-            ppnt: result.userInfo.mmemPnt || result.userInfo.ppnt || 0,
-            regd: result.userInfo.registeredDate || result.userInfo.regd,
-            bir: result.userInfo.mmemBir || result.userInfo.bir,
-            pphoto: result.userInfo.mmemPphoto || result.userInfo.pphoto,
+            loginId: result.userInfo.id,
+            nick: result.userInfo.nick,
+            ppnt: result.userInfo.point,
+            // regd: result.userInfo.registeredDate || result.userInfo.regd,
+            // bir: result.userInfo.mmemBir || result.userInfo.bir,
+            // pphoto: result.userInfo.mmemPphoto || result.userInfo.pphoto,
           },
         },
       };
@@ -54,91 +51,104 @@ const login = async (credentials) => {
     console.error('❌ 로그인 에러:', error);
 
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      throw new Error('서버에 연결할 수 없습니다. 백엔드 서버가 실행중인지 확인해주세요.');
+      throw new Error('서버 연결 불가능, 백엔드 서버가 실행 확인하쇼');
     }
 
-    throw new Error(error.message || '로그인에 실패했습니다.');
+    throw new Error(error.message || '로그인 실패');
   }
 };
 
-// ✅ 회원가입 API (기본 구조만 - 백엔드 완성 후 수정 예정)
+//? 회원가입 API
 const register = async (userData) => {
   try {
-    const response = await fetch(`${SERVER_URL}/do.register`, {
+    const formData = new FormData();
+    formData.append('id', userData.id);
+    formData.append('pw', userData.password);
+    formData.append('nick', userData.nickname);
+    formData.append('birth', userData.birthDate);
+
+    if (userData.profilePhoto) {
+      formData.append('photoTemp', userData.profilePhoto);
+    }
+
+    const response = await fetch(`${SERVER_URL}/do.registerpage`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       credentials: 'include',
-      body: JSON.stringify({
-        mmemId: userData.id,
-        mmemPw: userData.password,
-        mmemNick: userData.nickname,
-        mmemBir: userData.birthDate,
-        email: userData.email,
-      }),
+      body: formData,
     });
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const result = await response.json();
+    const result = await response.text();
 
-    if (result.success) {
+    if (result === 'ok') {
       return {
         success: true,
-        message: '회원가입이 완료되었습니다.',
-        data: { userId: result.userId },
+        message: '회원가입 완료',
       };
     } else {
-      throw new Error(result.message || '회원가입에 실패했습니다.');
+      throw new Error('회원가입 실패');
     }
   } catch (error) {
     console.error('회원가입 에러:', error);
-    throw new Error(error.message || '회원가입에 실패했습니다.');
+    throw new Error(error.message || '회원가입 실패');
   }
 };
 
-// ✅ 토큰 검증 API (기본 구조만)
-const verifyToken = async (token) => {
+//? 사용자 세션 검증 API - 서버에서 세션 체크
+const verifyUser = async (userId) => {
   try {
+    console.log('🔍 세션 검증 시작, userId', userId);
+
     const response = await fetch(`${SERVER_URL}/do.logincheck`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
       },
-      credentials: 'include',
+      credentials: 'include', // 🔥 쿠키의 세션 정보로 검증
+      body: JSON.stringify({
+        regid: userId, // 백엔드에서 RegIdCheck.regid로 받음
+      }),
     });
-    console.log('----');
-    console.log(token.toString());
-    // if (!response.ok) {
-    //   throw new Error('토큰이 유효하지 않습니다.');
-    // }
-    console.log(response);
-    console.log('poiuy');
-    const result = await response.json();
 
-    return {
-      success: true,
-      data: {
-        user: {
-          id: result.userInfo.mmemId,
-          nick: result.userInfo.mmemNick,
-          points: result.userInfo.mmemPnt || 0,
-          registeredDate: result.userInfo.registeredDate,
-          birthDate: result.userInfo.mmemBir,
-          profilePhoto: result.userInfo.mmemPphoto,
+    console.log('📡 세션 검증 응답 상태:', response.status);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ 세션 검증 에러 응답:', errorText);
+      throw new Error('세션 유효 X');
+    }
+
+    const result = await response.json();
+    console.log('✅ 세션 검증 성공:', result);
+
+    // 서버에서 세션이 유효하다고 응답한 경우
+    if (result.isLogined && result.sessionValid) {
+      return {
+        success: true,
+        data: {
+          user: {
+            loginId: result.userInfo.id,
+            nick: result.userInfo.nick,
+            ppnt: result.userInfo.point,
+            // regd: result.userInfo.registeredDate,
+            // bir: result.userInfo.mmemBir,
+            // pphoto: result.userInfo.mmemPphoto,
+          },
         },
-      },
-    };
+      };
+    } else {
+      throw new Error('세션 만료');
+    }
   } catch (error) {
-    throw new Error(error.message || '토큰 검증에 실패했습니다.');
+    console.error('❌ 세션 검증 실패:', error);
+    throw new Error(error.message || '세션 검증 실패');
   }
 };
 
-// ✅ 이메일 인증코드 발송 API (백엔드 완성 후 구현 예정)
+//? 이메일 인증코드 발송 API
 const sendVerificationEmail = async (email) => {
   try {
     const response = await fetch(`${SERVER_URL}/send-email-code`, {
@@ -165,7 +175,7 @@ const sendVerificationEmail = async (email) => {
   }
 };
 
-// ✅ 이메일 인증코드 확인 API (백엔드 완성 후 구현 예정)
+// ?이메일 인증코드 확인 API
 const verifyEmailCode = async (email, code) => {
   try {
     const response = await fetch(`${SERVER_URL}/verify-email-code`, {
@@ -188,193 +198,202 @@ const verifyEmailCode = async (email, code) => {
       message: result.message || '이메일 인증이 완료되었습니다.',
     };
   } catch (error) {
-    throw new Error(error.message || '인증코드 확인에 실패했습니다.');
+    throw new Error(error.message || '이메일 인증에 실패했습니다.');
   }
 };
 
-// ✅ 아이디 중복 확인 API (백엔드 완성 후 구현 예정)
+//? 아이디 중복 확인 API
 const checkIdDuplicate = async (id) => {
   try {
-    const response = await fetch(`${SERVER_URL}/check-id?id=${encodeURIComponent(id)}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    return {
-      success: true,
-      available: result.available,
-      message: result.message,
-    };
-  } catch (error) {
-    throw new Error(error.message || 'ID 중복 확인에 실패했습니다.');
-  }
-};
-
-// ✅ 닉네임 중복 확인 API (백엔드 완성 후 구현 예정)
-const checkNicknameDuplicate = async (nickname) => {
-  try {
-    const response = await fetch(
-      `${SERVER_URL}/check-nickname?nickname=${encodeURIComponent(nickname)}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    return {
-      success: true,
-      available: result.available,
-      message: result.message,
-    };
-  } catch (error) {
-    throw new Error(error.message || '닉네임 중복 확인에 실패했습니다.');
-  }
-};
-
-// ✅ 회원정보 수정 API (백엔드 완성 후 구현 예정)
-const updateUserInfo = async (userId, updateData) => {
-  try {
-    const requestData = {};
-
-    // 프론트엔드 필드명을 백엔드 필드명으로 변환
-    if (updateData.nickname) requestData.mmemNick = updateData.nickname;
-    if (updateData.password) requestData.mmemPw = updateData.password;
-    if (updateData.profilePhoto !== undefined) requestData.mmemPphoto = updateData.profilePhoto;
-
-    const response = await fetch(`${SERVER_URL}/users/${userId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify(requestData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    return {
-      success: true,
-      message: result.message || '회원정보가 수정되었습니다.',
-      data: {
-        user: {
-          id: result.user.mmemId,
-          nick: result.user.mmemNick,
-          ppnt: result.user.mmemPnt,
-          regd: result.user.registeredDate,
-          bir: result.user.mmemBir,
-          pphoto: result.user.mmemPphoto,
-        },
-      },
-    };
-  } catch (error) {
-    throw new Error(error.message || '회원정보 수정에 실패했습니다.');
-  }
-};
-
-// ✅ 회원탈퇴 API (백엔드 완성 후 구현 예정)
-const deleteAccount = async (userId, password) => {
-  try {
-    const response = await fetch(`${SERVER_URL}/users/${userId}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({ password }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    return {
-      success: true,
-      message: result.message || '회원탈퇴가 완료되었습니다.',
-    };
-  } catch (error) {
-    throw new Error(error.message || '회원탈퇴에 실패했습니다.');
-  }
-};
-
-// ✅ 사용자 정보 조회 API (백엔드 완성 후 구현 예정)
-const getUserInfo = async (userId) => {
-  try {
-    const response = await fetch(`${SERVER_URL}/users/${userId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    return {
-      success: true,
-      data: {
-        user: {
-          id: result.mmemId,
-          nickname: result.mmemNick,
-          points: result.mmemPnt || 0,
-          registeredDate: result.registeredDate,
-          birthDate: result.mmemBir,
-          profilePhoto: result.mmemPphoto,
-        },
-      },
-    };
-  } catch (error) {
-    throw new Error(error.message || '사용자 정보 조회에 실패했습니다.');
-  }
-};
-
-// ✅ 로그아웃 API (백엔드 완성 후 구현 예정)
-const logout = async () => {
-  try {
-    const response = await fetch(`${SERVER_URL}/logout`, {
+    const response = await fetch(`${SERVER_URL}/do.Idcheck`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       credentials: 'include',
+      body: JSON.stringify({ regid: id }),
     });
 
-    // 로컬 스토리지 토큰 삭제
-    localStorage.removeItem('token');
-    localStorage.removeItem('userData');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    return {
+      success: true,
+      available: result.idpossible,
+      message: result.idpossible ? '사용 가능 아이디' : '이미 사용 중 아이디',
+    };
+  } catch (error) {
+    throw new Error(error.message || '아이디 중복 확인 실패');
+  }
+};
+
+//? 닉네임 중복 확인 API
+const checkNicknameDuplicate = async (nickname) => {
+  try {
+    const response = await fetch(`${SERVER_URL}/do.NickCheck`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ regnc: nickname }),
+    });
 
     if (!response.ok) {
-      // 서버 에러여도 로컬 정리는 완료됨
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    return {
+      success: true,
+      available: result.nickpossible,
+      message: result.nickpossible ? '사용 가능 닉네임' : '이미 사용중 닉네임',
+    };
+  } catch (error) {
+    throw new Error(error.message || '닉네임 중복 확인 실패');
+  }
+};
+
+//? 회원정보 수정 API - 세션 기반
+const updateUserInfo = async (userId, updateData, currentPassword) => {
+  try {
+    // 🔥 FormData 사용 (백엔드가 @RequestParam 사용)
+    const formData = new FormData();
+    formData.append('eid', userId);
+    formData.append('ecurpw', currentPassword);
+
+    if (updateData.nickname) {
+      formData.append('enick', updateData.nickname);
+    }
+
+    if (updateData.password) {
+      formData.append('epw', updateData.password);
+    }
+
+    if (updateData.profilePhoto) {
+      formData.append('ephoto', updateData.profilePhoto);
+    }
+
+    const response = await fetch(`${SERVER_URL}/member.info.edit`, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData, // 🔥 JSON이 아닌 FormData 사용
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.resultD && result.resultD.result) {
+      // 수정 후 최신 정보를 다시 조회
+      const userInfo = await getUserInfo(userId);
       return {
         success: true,
-        message: '로그아웃되었습니다.',
+        message: '회원정보가 수정되었습니다.',
+        data: userInfo.data,
+      };
+    } else {
+      throw new Error('회원정보 수정에 실패했습니다.');
+    }
+  } catch (error) {
+    throw new Error(error.message || '회원정보 수정에 실패했습니다.');
+  }
+};
+
+//? 회원탈퇴 API - 세션 기반
+const deleteAccount = async (password) => {
+  try {
+    const response = await fetch(`${SERVER_URL}/member.exit`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // 🔥 세션으로 사용자 식별
+      body: JSON.stringify({ regid: password }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    // 🔥 백엔드 응답: { resultD: { result: "탈퇴 완료" } }
+    if (result.resultD && result.resultD.result === '탈퇴 완료') {
+      return {
+        success: true,
+        message: '회원탈퇴 완료.',
+      };
+    } else {
+      throw new Error('회원탈퇴 실패');
+    }
+  } catch (error) {
+    throw new Error(error.message || '회원탈퇴 실패');
+  }
+};
+
+//? 사용자 정보 조회 API - 세션 기반
+const getUserInfo = async (userId) => {
+  try {
+    const response = await fetch(`${SERVER_URL}/do.MeminfoCheck`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // 🔥 세션으로 사용자 식별
+      body: JSON.stringify({ regid: userId }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.Meminfo && result.Meminfo !== 'nothing') {
+      return {
+        success: true,
+        data: {
+          user: {
+            loginId: result.Meminfo.id,
+            nick: result.Meminfo.nick,
+            ppnt: result.Meminfo.ppnt,
+            regd: result.Meminfo.regd,
+            bir: result.Meminfo.bir,
+            pphoto: result.Meminfo.pphoto,
+          },
+        },
+      };
+    } else {
+      throw new Error('사용자 정보 찾을 수 없음');
+    }
+  } catch (error) {
+    throw new Error(error.message || '사용자 정보 조회 실패');
+  }
+};
+
+//? 로그아웃 API - 세션 기반
+const logout = async () => {
+  try {
+    const response = await fetch(`${SERVER_URL}/do.logout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // 🔥 세션 삭제를 위해 필요
+    });
+
+    if (!response.ok) {
+      // 로그아웃은 에러가 나도 성공으로 처리
+      return {
+        success: true,
+        message: '로그아웃',
       };
     }
 
@@ -382,13 +401,10 @@ const logout = async () => {
 
     return {
       success: true,
-      message: result.message || '로그아웃되었습니다.',
+      message: result.message || '로그아웃',
     };
   } catch (error) {
-    // 에러가 발생해도 로컬 토큰은 삭제됨
-    localStorage.removeItem('token');
-    localStorage.removeItem('userData');
-
+    // 로그아웃은 에러가 나도 성공으로 처리
     return {
       success: true,
       message: '로그아웃되었습니다.',
@@ -396,16 +412,18 @@ const logout = async () => {
   }
 };
 
-// ✅ 비밀번호 확인 API (백엔드 완성 후 구현 예정)
+//? 비밀번호 확인 API
 const verifyPassword = async (userId, password) => {
   try {
-    const response = await fetch(`${SERVER_URL}/users/${userId}/verify-password`, {
+    const response = await fetch(`${SERVER_URL}/verify-password`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include',
-      body: JSON.stringify({ password }),
+      credentials: 'include', // 🔥 세션으로 사용자 식별
+      body: JSON.stringify({
+        regid: password, // 🔥 RegIdCheck 구조에 맞춰 비밀번호를 regid에 전송
+      }),
     });
 
     if (!response.ok) {
@@ -414,20 +432,25 @@ const verifyPassword = async (userId, password) => {
 
     const result = await response.json();
 
-    return {
-      success: true,
-      message: result.message || '비밀번호 확인이 완료되었습니다.',
-    };
+    // 🔥 예상 백엔드 응답: { valid: true/false }
+    if (result.valid) {
+      return {
+        success: true,
+        message: '비밀번호 확인이 완료되었습니다.',
+      };
+    } else {
+      throw new Error('비밀번호가 올바르지 않습니다.');
+    }
   } catch (error) {
     throw new Error(error.message || '비밀번호 확인에 실패했습니다.');
   }
 };
 
 // ✅ API 객체 export
-const USER_API = {
+const BACK_USER_API = {
   login,
   register,
-  verifyToken,
+  verifyUser,
   sendVerificationEmail,
   verifyEmailCode,
   checkIdDuplicate,
@@ -439,4 +462,4 @@ const USER_API = {
   verifyPassword,
 };
 
-export default USER_API;
+export default BACK_USER_API;

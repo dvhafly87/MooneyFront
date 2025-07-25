@@ -34,7 +34,6 @@ function HomePage() {
           <MyCalendar />
           <CategoryChart />
         </div>
-      </div>
 
       {/* 오른쪽 컬럼 */}
       <div
@@ -167,14 +166,6 @@ function HomePage() {
               }}
             />
           </div>
-          <img
-            src={chatImg}
-            alt="챗봇 무니"
-            style={{
-              height: '100px',
-              width: 'auto',
-            }}
-          />
         </div>
       </div>
 
