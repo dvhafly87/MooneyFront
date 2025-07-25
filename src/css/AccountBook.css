@@ -1,0 +1,349 @@
+
+.ledger-container {
+  padding: 10px 20px 20px;
+  font-family: 'Noto Sans KR', sans-serif;
+  background: #f9fafa;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.ledger-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 16px;
+  width: 100%;
+  max-width: 1200px;
+  text-align: left;
+}
+
+.ledger-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  width: 100%;
+  max-width: 1200px;
+  align-items: flex-start;
+  margin-top: 0;
+  box-sizing: border-box;
+}
+
+.ledger-left,
+.ledger-right {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 🔧 1번 방식 적용: 달력은 고정, 내역만 스크롤 */
+.ledger-left {
+  /* max-height 제거, overflow 제거 */
+  padding-right: 6px;
+}
+
+.ledger-right {
+  padding-top: 40px;
+}
+
+.ledger-date {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.ledger-entry-box {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  height: 350px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.ledger-entry-box h4 {
+  margin-bottom: 10px;
+  font-size: 17px;
+  font-weight: bold;
+}
+
+.entry {
+  display: grid;
+  grid-template-columns: 130px 1fr 60px 60px;
+  align-items: center;
+  font-size: 15px;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+  gap: 10px;
+}
+
+.entry:last-child {
+  border-bottom: none;
+}
+
+.entry span:first-child {
+  font-weight: bold;
+  font-size: 16px;
+  word-break: break-all;
+}
+
+.entry .tag {
+  background: #e3f2fd;
+  color: #1565c0;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  max-width: 50px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.entry button {
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.1s ease;
+  background: none;
+  border: none;
+  font-weight: 600;
+  padding: 0;
+  text-align: center;
+}
+
+.entry button:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+.entry button:nth-of-type(1) {
+  color: #1565c0;
+}
+
+.entry button:nth-of-type(2) {
+  color: #c62828;
+}
+
+.entry.income .tag {
+  color: #2962ff;
+}
+
+.entry.expense .tag {
+  color: #e53935;
+}
+
+.entry.empty {
+  color: #888;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 0;
+  min-height: 100px;
+}
+
+.ledger-right label {
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ledger-right input,
+.ledger-right select,
+.ledger-right textarea {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #f5f5f5;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ledger-right textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.ledger-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.ledger-buttons button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.ledger-buttons .save {
+  background: #4b6fae;
+  color: white;
+}
+
+.ledger-buttons .save:hover {
+  background: #3a5e99;
+}
+
+.ledger-buttons .delete {
+  background: #eee;
+  color: #444;
+}
+
+.category-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.category-item {
+  background: #f0f4f8;
+  border-radius: 20px;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.category-item.selected {
+  background: #d0e4ff;
+  font-weight: bold;
+}
+
+.category-item .remove-btn {
+  font-size: 12px;
+  color: #999;
+  cursor: pointer;
+}
+
+.category-add {
+  font-size: 13px;
+  color: #4b6fae;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 20px;
+  background: #eef3ff;
+  font-weight: bold;
+}
+
+.selected-tags {
+  margin-top: 8px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  font-size: 13px;
+  color: #4b6fae;
+  background: #e7efff;
+  padding: 4px 10px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tag-remove {
+  border: none;
+  background: none;
+  color: #c62828;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.category-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 20px;
+  z-index: 2000;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modal-buttons .save {
+  background: #a5d6a7;
+  color: #2e7d32;
+}
+
+.modal-buttons .cancel {
+  background: #eeeeee;
+  color: #555;
+}
+
+.react-calendar {
+  width: 100% !important;
+  box-sizing: border-box;
+  height: auto;
+}
+
+.selected-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #e7efff;
+  padding: 6px 12px;
+  border-radius: 14px;
+  margin-top: 8px;
+  font-size: 13px;
+  max-width: fit-content;
+}
+
+.selected-tag .tag {
+  background: none;
+  color: #4b6fae;
+  padding: 0;
+  margin: 0;
+}
+.repeat-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  margin: 12px 0;
+  white-space: nowrap;
+}
+
+
+.repeat-checkbox input[type="checkbox"] {
+  transform: scale(1.3);
+  cursor: pointer;
+}
+.ledger-right > label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}

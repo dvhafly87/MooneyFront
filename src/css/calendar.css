@@ -10,7 +10,7 @@
   box-sizing: border-box;
   overflow: hidden;
 }
-  
+
   /* 네비게이션 (월/년 이동) */
   .react-calendar__navigation {
     display: flex;
@@ -109,3 +109,4 @@
     margin-bottom: 40px;
   }
   
+

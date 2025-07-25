@@ -4,7 +4,8 @@ export const ROUTES = {
   CHALLENGE: '/challenge',
   DIARY: '/diary',
   ACCOUNT_BOOK: '/accountbook',
-  SETTING: '/setting',
   SUBSCRIPTION: '/subscription',
   USER: '/user',
+  MODIFY_USER: '/modifyuser',
+  WITHDRAWAL: '/withdrawal',
 };

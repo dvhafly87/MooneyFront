@@ -2,6 +2,9 @@
   width: 520px;      /* ✅ 달력과 통일 */
   height: 310px;     /* ✅ 딱 맞는 비율 */
   background: #F7F6F5;
+  width: 520px; /* ✅ 달력과 통일 */
+  height: 310px; /* ✅ 딱 맞는 비율 */
+  background: #f7f6f5;
   border-radius: 20px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   font-family: 'Pretendard', sans-serif;
