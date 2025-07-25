@@ -1,235 +1,131 @@
-import { Apexcharts } from '@components/Apexcharts';
-import MyCalendar from '@components/MyCalendar';
-import CategoryChart from '@components/CategoryChart';
-import chatImg from '@img/chatbotmooney.png';
+import { useState, useEffect } from 'react';
+import TogglePage from './TogglePage';
+import { Apexcharts } from '../components/Apexcharts';
+import MyCalendar from '../components/MyCalendar';
+import CategoryChart from '../components/CategoryChart';
+import '../css/homepage.css';
+import chatImg from '../img/chatbotmooney.png';
+
+const BASE_URL = 'http://192.168.0.4:7474';
+const MEMBER_ID = 'hhhh234';
 
 function HomePage() {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [monthlyData, setMonthlyData] = useState({});
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [dayDetail, setDayDetail] = useState({ income: 0, expense: 0 });
+  const [categoryData, setCategoryData] = useState([]);
+
+  const fetchMonthlyData = async () => {
+    const start = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+    const end = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+    const format = (d) => d.toISOString().split('T')[0];
+
+    try {
+      const res = await fetch(
+        `${BASE_URL}/expenses/member/${MEMBER_ID}/by-date-range?startDate=${format(
+          start,
+        )}&endDate=${format(end)}`,
+      );
+      const data = await res.json();
+
+      const map = {};
+      const catMap = {};
+
+      data.forEach((e) => {
+        const date = e.mexpDt;
+        if (!map[date]) map[date] = { income: 0, expense: 0 };
+        if (e.mexpType === 'I') map[date].income += e.mexpAmt;
+        else if (e.mexpType === 'E') map[date].expense += e.mexpAmt;
+
+        if (e.mexpType === 'E') {
+          const cname = e.category?.mcatName || '기타';
+          if (!catMap[cname]) catMap[cname] = 0;
+          catMap[cname] += e.mexpAmt;
+        }
+      });
+
+      setMonthlyData(map);
+
+      const chartData = Object.entries(catMap).map(([category, amount]) => ({
+        category,
+        amount,
+      }));
+      setCategoryData(chartData);
+    } catch (err) {
+      console.error('❌ 월간 데이터 불러오기 실패', err);
+    }
+  };
+
+  const updateSelectedDayDetail = (date) => {
+    const key = date.toISOString().split('T')[0];
+    const data = monthlyData[key] || { income: 0, expense: 0 };
+    setDayDetail(data);
+  };
+
+  useEffect(() => {
+    fetchMonthlyData();
+  }, [selectedDate]);
+
+  useEffect(() => {
+    updateSelectedDayDetail(selectedDate);
+  }, [monthlyData, selectedDate]);
+
   return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-        gap: '40px',
-        padding: '20px 40px',
-        minHeight: '100vh',
-      }}
-    >
-      {/* 왼쪽 컬럼 - 달력 */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <div
-          style={{
-            width: '574px',
-            height: '781px',
-            borderRadius: '50px',
-            backgroundColor: '#7898B1',
-            textAlign: 'center',
-            display: 'inline-block',
-          }}
-        >
-          <MyCalendar />
-          <CategoryChart />
-        </div>
-      </div>
+    <div className={`homepage-container ${sidebarOpen ? 'sidebar-open' : ''}`}>
+      <TogglePage onToggle={setSidebarOpen} isLoggedIn={true} userId="user01" />
 
-      {/* 오른쪽 컬럼 - 카드들 */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          height: '781px',
-        }}
-      >
-        {/* 수입 카드 */}
-        <div
-          style={{
-            height: '170px',
-            width: '342px',
-            backgroundColor: '#F4F4F4',
-            borderRadius: '30px',
-            boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
-            padding: '20px',
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '16px',
-            transition: 'transform 0.2s, box-shadow 0.2s',
-            cursor: 'pointer',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-4px)';
-            e.currentTarget.style.boxShadow = '0 6px 12px rgba(0, 0, 0, 0.2)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0px 4px 4px rgba(0, 0, 0, 0.25)';
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-            }}
-          >
-            <div
-              style={{
-                fontWeight: 'bold',
-                fontSize: '18px',
-                margin: '30px 0 8px 0',
-              }}
-            >
-              수입
-            </div>
-            <div
-              style={{
-                fontSize: '30px',
-                color: '#3C82F6',
-              }}
-            >
-              20,000원
-            </div>
-          </div>
-          <div
-            style={{
-              width: '120px',
-              height: '120px',
-            }}
-          >
-            <Apexcharts win={70} defeat={30} />
-          </div>
-        </div>
-
-        {/* 지출 카드 */}
-        <div
-          style={{
-            height: '170px',
-            width: '342px',
-            backgroundColor: '#F4F4F4',
-            borderRadius: '30px',
-            boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
-            padding: '20px',
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '16px',
-            transition: 'transform 0.2s, box-shadow 0.2s',
-            cursor: 'pointer',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-4px)';
-            e.currentTarget.style.boxShadow = '0 6px 12px rgba(0, 0, 0, 0.2)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0px 4px 4px rgba(0, 0, 0, 0.25)';
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-            }}
-          >
-            <div
-              style={{
-                fontWeight: 'bold',
-                fontSize: '18px',
-                margin: '30px 0 8px 0',
-              }}
-            >
-              지출
-            </div>
-            <div
-              style={{
-                fontSize: '30px',
-                color: '#FF4D4D',
-              }}
-            >
-              2,000원
-            </div>
-          </div>
-          <div
-            style={{
-              width: '120px',
-              height: '120px',
-
-            }}
-          >
-            <Apexcharts win={70} defeat={30} />
-          </div>
-        </div>
-
-        {/* 챗봇 무니 카드 */}
-        <div
-          style={{
-            position: 'relative',
-            height: '170px',
-            width: '342px',
-            backgroundColor: '#f4f4f4',
-            borderRadius: '30px',
-            boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
-            padding: '20px',
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'flex-end',
-            justifyContent: 'space-between',
-            overflow: 'visible',
-          }}
-        >
-          <div
-            style={{
-              background: '#e0e0e0',
-              borderRadius: '25px',
-              padding: '20px',
-              maxWidth: '200px',
-              fontSize: '14px',
-              lineHeight: '1.5',
-              color: '#222',
-              position: 'relative',
-              boxShadow: 'inset 0px 0px 6px rgba(0, 0, 0, 0.15)',
-              transform: 'translateY(-20px)',
-            }}
-          >
-            <p style={{ margin: 0 }}>
-              무니가 예측한 지출은{' '}
-              <span style={{ color: '#e53935', fontWeight: 'bold' }}>72,000</span>원이에요.
-              <br />
-              목표에 맞을까요?
-            </p>
-            {/* 말풍선 꼬리 */}
-            <div
-              style={{
-                content: '',
-                position: 'absolute',
-                right: '-12px',
-                bottom: '20px',
-                width: 0,
-                height: 0,
-                borderTop: '10px solid transparent',
-                borderBottom: '10px solid transparent',
-                borderLeft: '12px solid #e0e0e0',
-              }}
+      <div className="main-content-wrapper">
+        <div className="left-column">
+          <div className="calender-container">
+            <MyCalendar
+              value={selectedDate}
+              onChange={(d) => setSelectedDate(d)}
+              financeData={monthlyData}
             />
+            <CategoryChart data={categoryData} />
           </div>
-          <img
-            src={chatImg}
-            alt="챗봇 무니"
-            style={{
-              height: '100px',
-              width: 'auto',
-            }}
-          />
+        </div>
+
+        <div className="right-column">
+          <div className="income-card">
+            <div className="income-card-left">
+              <div className="icome-card-title">수입</div>
+              <div className="income-card-amount">{dayDetail.income.toLocaleString()} 원</div>
+            </div>
+            <div className="income-card-chart">
+              <Apexcharts
+                key={`chart-${dayDetail.income}-${dayDetail.expense}`}
+                win={dayDetail.income}
+                defeat={dayDetail.expense}
+              />
+            </div>
+          </div>
+
+          <div className="outcome-card">
+            <div className="outcome-card-left">
+              <div className="outcome-card-title">지출</div>
+              <div className="outcome-card-amount">{dayDetail.expense.toLocaleString()} 원</div>
+            </div>
+            <div className="outcome-card-chart">
+              <Apexcharts
+                key={`chart-${dayDetail.income}-${dayDetail.expense}`}
+                win={dayDetail.income}
+                defeat={dayDetail.expense}
+              />
+            </div>
+          </div>
+
+          <div className="chatbot-mooney">
+            <div className="chatbot-bubble">
+              <p>
+                무니가 예측한 지출은 <span className="highlight">72,000</span>원이에요.
+                <br />
+                목표에 맞을까요?
+              </p>
+            </div>
+            <img src={chatImg} alt="챗봇 무니" className="chatboticon" />
+          </div>
         </div>
       </div>
     </div>
