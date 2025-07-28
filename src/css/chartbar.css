@@ -1,7 +1,4 @@
 .chart-bar {
-  width: 520px;      /* ✅ 달력과 통일 */
-  height: 310px;     /* ✅ 딱 맞는 비율 */
-  background: #F7F6F5;
   width: 520px; /* ✅ 달력과 통일 */
   height: 310px; /* ✅ 딱 맞는 비율 */
   background: #f7f6f5;

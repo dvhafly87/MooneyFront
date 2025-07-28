@@ -4,7 +4,7 @@ import 'react-calendar/dist/Calendar.css';
 import '../css/AccountBook.css';
 import noExpImg from '../img/no_exp.png';
 
-const BASE_URL = 'http://192.168.0.4:7474';
+const BASE_URL = 'http://192.168.0.20:7474';
 const MEMBER_ID = 'hhhh234';
 
 const AccountBookPage = () => {
