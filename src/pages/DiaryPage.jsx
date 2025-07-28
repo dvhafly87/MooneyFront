@@ -1,3 +1,4 @@
+// src/pages/DiaryPage.jsx - 성능 최적화 버전
 import React, { useState, useEffect, useContext, useCallback, useMemo } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
@@ -6,8 +7,8 @@ import diaryImg from '../img/pencil_mooney.png';
 import CategoryChart from '../components/CategoryChart';
 import AuthContext from '../contexts/AuthContext.jsx';
 
-import { EXPENSE_API } from '../services/apiService.js';
-import { DIARY_API } from '../services/apiService.js';
+import BACK_EXPENSE_API from './../services/back/expenseApi';
+import BACK_DIARY_API from './../services/back/diaryApi';
 
 const DiaryPage = () => {
   const [date, setDate] = useState(new Date());
@@ -42,7 +43,7 @@ const DiaryPage = () => {
   const loadDiaryData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const diaryResult = await DIARY_API.getDiaryByDate(date);
+      const diaryResult = await BACK_DIARY_API.getDiaryByDate(date);
 
       if (diaryResult.data) {
         setDiaryText(diaryResult.data.text || '');
@@ -65,7 +66,7 @@ const DiaryPage = () => {
       // 비동기로 처리하여 UI 블로킹 방지
       await new Promise((resolve) => setTimeout(resolve, 0));
 
-      const dayExpenseData = EXPENSE_API.getExpensesByDate(date);
+      const dayExpenseData = BACK_EXPENSE_API.getExpensesByDate(date);
 
       // 데이터가 실제로 변경된 경우에만 상태 업데이트
       setExpenseData((prevData) => {
@@ -105,7 +106,7 @@ const DiaryPage = () => {
 
     setIsLoading(true);
     try {
-      await DIARY_API.saveDiary(date, diaryText);
+      await BACK_DIARY_API.saveDiary(date, diaryText);
       setEditMode(false);
       await loadDiaryData(); // 저장 후 다시 로드
       console.log('일기 저장 완료');
@@ -125,7 +126,7 @@ const DiaryPage = () => {
 
     setIsLoading(true);
     try {
-      await DIARY_API.deleteDiary(date);
+      await BACK_DIARY_API.deleteDiary(date);
       await loadDiaryData(); // 삭제 후 다시 로드
       console.log('일기 삭제 완료');
     } catch (error) {

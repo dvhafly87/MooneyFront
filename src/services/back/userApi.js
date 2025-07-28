@@ -1,465 +1,157 @@
+// src/services/back/userApi.js
+// 🔥 백엔드 API 직접 호출용 (AuthContext 외부에서 사용시)
+
 const SERVER_URL = import.meta.env.VITE_API_BASE_URL;
 
-//? 로그인 API - 세션 기반 (localStorage 사용 안함)
-const login = async (credentials) => {
-  const logindata = {
-    loginId: credentials.id,
-    loginPw: credentials.password,
+// 🔥 기본 API 호출 함수
+const apiCall = async (endpoint, options = {}) => {
+  const url = `${SERVER_URL}${endpoint}`;
+  const defaultOptions = {
+    credentials: 'include', // Spring Boot 세션 쿠키 포함
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+    ...options,
   };
 
   try {
-    console.log('🚀 로그인 요청 시작:', logindata);
-
-    const response = await fetch(`${SERVER_URL}/do.login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // 🔥 쿠키 기반 세션 사용
-      body: JSON.stringify(logindata),
-    });
-
-    console.log('📡 응답 상태:', response.status);
+    console.log(`🚀 API 호출: ${options.method || 'GET'} ${url}`);
+    const response = await fetch(url, defaultOptions);
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
-    const result = await response.json();
-    console.log('✅ 백엔드 응답:', result);
-
-    if (result.isLogined) {
-      // 🔥 세션은 서버에서 자동으로 설정됨 - 클라이언트에서는 저장하지 않음
-      return {
-        success: true,
-        message: '로그인 성공',
-        data: {
-          user: {
-            loginId: result.userInfo.id,
-            nick: result.userInfo.nick,
-            ppnt: result.userInfo.point,
-            // regd: result.userInfo.registeredDate || result.userInfo.regd,
-            // bir: result.userInfo.mmemBir || result.userInfo.bir,
-            // pphoto: result.userInfo.mmemPphoto || result.userInfo.pphoto,
-          },
-        },
-      };
+    // Content-Type에 따라 다르게 처리
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const result = await response.json();
+      console.log(`✅ API 응답: ${endpoint}`, result);
+      return result;
     } else {
-      throw new Error(result.message || '로그인에 실패했습니다.');
+      const result = await response.text();
+      console.log(`✅ API 응답: ${endpoint}`, result);
+      return result;
     }
   } catch (error) {
-    console.error('❌ 로그인 에러:', error);
-
-    if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      throw new Error('서버 연결 불가능, 백엔드 서버가 실행 확인하쇼');
-    }
-
-    throw new Error(error.message || '로그인 실패');
+    console.error(`❌ API 에러: ${endpoint}`, error);
+    throw error;
   }
 };
 
-//? 회원가입 API
-const register = async (userData) => {
-  try {
-    const formData = new FormData();
-    formData.append('id', userData.id);
-    formData.append('pw', userData.password);
-    formData.append('nick', userData.nickname);
-    formData.append('birth', userData.birthDate);
-
-    if (userData.profilePhoto) {
-      formData.append('photoTemp', userData.profilePhoto);
-    }
-
-    const response = await fetch(`${SERVER_URL}/do.registerpage`, {
-      method: 'POST',
-      credentials: 'include',
-      body: formData,
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.text();
-
-    if (result === 'ok') {
-      return {
-        success: true,
-        message: '회원가입 완료',
-      };
-    } else {
-      throw new Error('회원가입 실패');
-    }
-  } catch (error) {
-    console.error('회원가입 에러:', error);
-    throw new Error(error.message || '회원가입 실패');
-  }
+// 🔥 로그인 API
+export const login = async (credentials) => {
+  return await apiCall('/do.login', {
+    method: 'POST',
+    body: JSON.stringify({
+      loginId: credentials.id,
+      loginPw: credentials.password,
+    }),
+  });
 };
 
-//? 사용자 세션 검증 API - 서버에서 세션 체크
-const verifyUser = async (userId) => {
-  try {
-    console.log('🔍 세션 검증 시작, userId', userId);
-
-    const response = await fetch(`${SERVER_URL}/do.logincheck`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // 🔥 쿠키의 세션 정보로 검증
-      body: JSON.stringify({
-        regid: userId, // 백엔드에서 RegIdCheck.regid로 받음
-      }),
-    });
-
-    console.log('📡 세션 검증 응답 상태:', response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ 세션 검증 에러 응답:', errorText);
-      throw new Error('세션 유효 X');
-    }
-
-    const result = await response.json();
-    console.log('✅ 세션 검증 성공:', result);
-
-    // 서버에서 세션이 유효하다고 응답한 경우
-    if (result.isLogined && result.sessionValid) {
-      return {
-        success: true,
-        data: {
-          user: {
-            loginId: result.userInfo.id,
-            nick: result.userInfo.nick,
-            ppnt: result.userInfo.point,
-            // regd: result.userInfo.registeredDate,
-            // bir: result.userInfo.mmemBir,
-            // pphoto: result.userInfo.mmemPphoto,
-          },
-        },
-      };
-    } else {
-      throw new Error('세션 만료');
-    }
-  } catch (error) {
-    console.error('❌ 세션 검증 실패:', error);
-    throw new Error(error.message || '세션 검증 실패');
-  }
+// 🔥 로그아웃 API
+export const logout = async () => {
+  return await apiCall('/do.logout', {
+    method: 'POST',
+  });
 };
 
-//? 이메일 인증코드 발송 API
-const sendVerificationEmail = async (email) => {
-  try {
-    const response = await fetch(`${SERVER_URL}/send-email-code`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({ email }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    return {
-      success: true,
-      message: result.message || '인증코드가 발송되었습니다.',
-    };
-  } catch (error) {
-    throw new Error(error.message || '이메일 전송에 실패했습니다.');
-  }
+// 🔥 세션 검증 API
+export const checkSession = async (loginId) => {
+  return await apiCall('/do.logincheck', {
+    method: 'POST',
+    body: JSON.stringify({ regid: loginId }),
+  });
 };
 
-// ?이메일 인증코드 확인 API
-const verifyEmailCode = async (email, code) => {
-  try {
-    const response = await fetch(`${SERVER_URL}/verify-email-code`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({ email, code }),
-    });
+// 🔥 회원가입 API
+export const register = async (userData) => {
+  const formData = new FormData();
+  formData.append('id', userData.id);
+  formData.append('pw', userData.password);
+  formData.append('nick', userData.nickname);
+  formData.append('birth', userData.birthDate);
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    return {
-      success: true,
-      message: result.message || '이메일 인증이 완료되었습니다.',
-    };
-  } catch (error) {
-    throw new Error(error.message || '이메일 인증에 실패했습니다.');
+  if (userData.profilePhoto) {
+    formData.append('photoTemp', userData.profilePhoto);
   }
+
+  return await apiCall('/do.registerpage', {
+    method: 'POST',
+    headers: {}, // FormData일 때는 Content-Type 헤더 제거
+    body: formData,
+  });
 };
 
-//? 아이디 중복 확인 API
-const checkIdDuplicate = async (id) => {
-  try {
-    const response = await fetch(`${SERVER_URL}/do.Idcheck`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({ regid: id }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    return {
-      success: true,
-      available: result.idpossible,
-      message: result.idpossible ? '사용 가능 아이디' : '이미 사용 중 아이디',
-    };
-  } catch (error) {
-    throw new Error(error.message || '아이디 중복 확인 실패');
-  }
+// 🔥 아이디 중복 확인 API
+export const checkIdDuplicate = async (id) => {
+  return await apiCall('/do.Idcheck', {
+    method: 'POST',
+    body: JSON.stringify({ regid: id }),
+  });
 };
 
-//? 닉네임 중복 확인 API
-const checkNicknameDuplicate = async (nickname) => {
-  try {
-    const response = await fetch(`${SERVER_URL}/do.NickCheck`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({ regnc: nickname }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    return {
-      success: true,
-      available: result.nickpossible,
-      message: result.nickpossible ? '사용 가능 닉네임' : '이미 사용중 닉네임',
-    };
-  } catch (error) {
-    throw new Error(error.message || '닉네임 중복 확인 실패');
-  }
+// 🔥 닉네임 중복 확인 API
+export const checkNicknameDuplicate = async (nickname) => {
+  return await apiCall('/do.NickCheck', {
+    method: 'POST',
+    body: JSON.stringify({ regnc: nickname }),
+  });
 };
 
-//? 회원정보 수정 API - 세션 기반
-const updateUserInfo = async (userId, updateData, currentPassword) => {
-  try {
-    // 🔥 FormData 사용 (백엔드가 @RequestParam 사용)
-    const formData = new FormData();
-    formData.append('eid', userId);
-    formData.append('ecurpw', currentPassword);
-
-    if (updateData.nickname) {
-      formData.append('enick', updateData.nickname);
-    }
-
-    if (updateData.password) {
-      formData.append('epw', updateData.password);
-    }
-
-    if (updateData.profilePhoto) {
-      formData.append('ephoto', updateData.profilePhoto);
-    }
-
-    const response = await fetch(`${SERVER_URL}/member.info.edit`, {
-      method: 'POST',
-      credentials: 'include',
-      body: formData, // 🔥 JSON이 아닌 FormData 사용
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    if (result.resultD && result.resultD.result) {
-      // 수정 후 최신 정보를 다시 조회
-      const userInfo = await getUserInfo(userId);
-      return {
-        success: true,
-        message: '회원정보가 수정되었습니다.',
-        data: userInfo.data,
-      };
-    } else {
-      throw new Error('회원정보 수정에 실패했습니다.');
-    }
-  } catch (error) {
-    throw new Error(error.message || '회원정보 수정에 실패했습니다.');
-  }
+// 🔥 사용자 정보 조회 API
+export const getUserInfo = async (loginId) => {
+  return await apiCall('/do.MeminfoCheck', {
+    method: 'POST',
+    body: JSON.stringify({ regid: loginId }),
+  });
 };
 
-//? 회원탈퇴 API - 세션 기반
-const deleteAccount = async (password) => {
-  try {
-    const response = await fetch(`${SERVER_URL}/member.exit`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // 🔥 세션으로 사용자 식별
-      body: JSON.stringify({ regid: password }),
-    });
+// 🔥 회원정보 수정 API
+export const updateUserInfo = async (updateData, currentPassword, loginId) => {
+  const formData = new FormData();
+  formData.append('eid', loginId);
+  formData.append('ecurpw', currentPassword);
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+  if (updateData.nickname) formData.append('enick', updateData.nickname);
+  if (updateData.password) formData.append('epw', updateData.password);
+  if (updateData.profilePhoto) formData.append('ephoto', updateData.profilePhoto);
 
-    const result = await response.json();
-
-    // 🔥 백엔드 응답: { resultD: { result: "탈퇴 완료" } }
-    if (result.resultD && result.resultD.result === '탈퇴 완료') {
-      return {
-        success: true,
-        message: '회원탈퇴 완료.',
-      };
-    } else {
-      throw new Error('회원탈퇴 실패');
-    }
-  } catch (error) {
-    throw new Error(error.message || '회원탈퇴 실패');
-  }
+  return await apiCall('/member.info.edit', {
+    method: 'POST',
+    headers: {}, // FormData일 때는 Content-Type 헤더 제거
+    body: formData,
+  });
 };
 
-//? 사용자 정보 조회 API - 세션 기반
-const getUserInfo = async (userId) => {
-  try {
-    const response = await fetch(`${SERVER_URL}/do.MeminfoCheck`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // 🔥 세션으로 사용자 식별
-      body: JSON.stringify({ regid: userId }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    if (result.Meminfo && result.Meminfo !== 'nothing') {
-      return {
-        success: true,
-        data: {
-          user: {
-            loginId: result.Meminfo.id,
-            nick: result.Meminfo.nick,
-            ppnt: result.Meminfo.ppnt,
-            regd: result.Meminfo.regd,
-            bir: result.Meminfo.bir,
-            pphoto: result.Meminfo.pphoto,
-          },
-        },
-      };
-    } else {
-      throw new Error('사용자 정보 찾을 수 없음');
-    }
-  } catch (error) {
-    throw new Error(error.message || '사용자 정보 조회 실패');
-  }
+// 🔥 회원탈퇴 API
+export const deleteAccount = async (password) => {
+  return await apiCall('/member.exit', {
+    method: 'POST',
+    body: JSON.stringify({ regid: password }),
+  });
 };
 
-//? 로그아웃 API - 세션 기반
-const logout = async () => {
-  try {
-    const response = await fetch(`${SERVER_URL}/do.logout`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // 🔥 세션 삭제를 위해 필요
-    });
-
-    if (!response.ok) {
-      // 로그아웃은 에러가 나도 성공으로 처리
-      return {
-        success: true,
-        message: '로그아웃',
-      };
-    }
-
-    const result = await response.json();
-
-    return {
-      success: true,
-      message: result.message || '로그아웃',
-    };
-  } catch (error) {
-    // 로그아웃은 에러가 나도 성공으로 처리
-    return {
-      success: true,
-      message: '로그아웃되었습니다.',
-    };
-  }
+// 🔥 프로필 이미지 URL 생성
+export const getProfileImageUrl = (photoName) => {
+  if (!photoName) return null;
+  return `${SERVER_URL}/member.photo/${photoName}`;
 };
 
-//? 비밀번호 확인 API
-const verifyPassword = async (userId, password) => {
-  try {
-    const response = await fetch(`${SERVER_URL}/verify-password`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // 🔥 세션으로 사용자 식별
-      body: JSON.stringify({
-        regid: password, // 🔥 RegIdCheck 구조에 맞춰 비밀번호를 regid에 전송
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    // 🔥 예상 백엔드 응답: { valid: true/false }
-    if (result.valid) {
-      return {
-        success: true,
-        message: '비밀번호 확인이 완료되었습니다.',
-      };
-    } else {
-      throw new Error('비밀번호가 올바르지 않습니다.');
-    }
-  } catch (error) {
-    throw new Error(error.message || '비밀번호 확인에 실패했습니다.');
-  }
-};
-
-// ✅ API 객체 export
-const BACK_USER_API = {
+// 🔥 전체 API 객체
+const userApi = {
   login,
+  logout,
+  checkSession,
   register,
-  verifyUser,
-  sendVerificationEmail,
-  verifyEmailCode,
   checkIdDuplicate,
   checkNicknameDuplicate,
+  getUserInfo,
   updateUserInfo,
   deleteAccount,
-  getUserInfo,
-  logout,
-  verifyPassword,
+  getProfileImageUrl,
 };
 
-export default BACK_USER_API;
+export default userApi;

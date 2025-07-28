@@ -1,3 +1,4 @@
+// src/styles/subscriptionPage.style.js
 import styled from '@emotion/styled';
 
 // 메인 컨테이너

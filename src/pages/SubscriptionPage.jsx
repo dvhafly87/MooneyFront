@@ -1,3 +1,6 @@
+// src/pages/SubscriptionPage.jsx
+// 카테고리는 조회만 하고 관리는 가계부 페이지에서만 진행
+
 import { useState, useEffect } from 'react';
 import {
   FaPlus,
@@ -22,7 +25,7 @@ import {
 } from 'recharts';
 import { showSuccess, showError, showWarning, showInfo } from '../utils/toast';
 import S from '../styles/subscriptionPage.style';
-import apiService from '../services/apiService';
+import BACK_SUBSCRIPTION_API, { subscriptionUtils } from '../services/back/subscriptionApi.js';
 
 const alignStyle = {
   LATEST: 'latest',
@@ -41,23 +44,42 @@ function SubscriptionPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSubscription, setEditingSubscription] = useState(null);
   const [formData, setFormData] = useState({
-    mexpDec: '', // 구독 서비스 설명
-    mexpAmt: '', // 금액
-    mexpRptdd: '', // 지출해야 할 날짜 (예정일)
-    mcatId: '', // 카테고리 ID
+    mexpDec: '',
+    mexpAmt: '',
+    mexpRptdd: '',
+    mcatId: '',
   });
   const [categories, setCategories] = useState([]);
-  const [expenses, setExpenses] = useState([]);
+  const [allExpenses, setAllExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const today = new Date();
+
+  // 현재 사용자 ID 가져오기
+  const getCurrentUserId = () => {
+    try {
+      const savedLoginState = localStorage.getItem('isYouLogined');
+      if (savedLoginState) {
+        const userData = JSON.parse(savedLoginState);
+        return userData.id;
+      }
+      return null;
+    } catch (error) {
+      console.error('사용자 ID 가져오기 실패:', error);
+      return null;
+    }
+  };
 
   // 구독 데이터 가져오기
   const fetchSubscriptions = async () => {
     try {
       setLoading(true);
-      const response = await apiService.SUBSCRIPTION.getSubscriptions();
-      setExpenses(response.data);
+      console.log('🔍 구독 데이터 가져오기 시작...');
+
+      const response = await BACK_SUBSCRIPTION_API.getSubscriptions();
+      console.log('✅ 구독 데이터 가져오기 성공:', response.data);
+
+      setAllExpenses(response.data);
     } catch (error) {
       showError('구독 데이터를 불러오는데 실패했습니다.');
       console.error('Fetch subscriptions error:', error);
@@ -66,10 +88,14 @@ function SubscriptionPage() {
     }
   };
 
-  // 카테고리 데이터 가져오기
+  // 카테고리 데이터 가져오기 (조회만)
   const fetchCategories = async () => {
     try {
-      const response = await apiService.SUBSCRIPTION.getCategories();
+      console.log('📂 카테고리 데이터 가져오기 시작...');
+
+      const response = await BACK_SUBSCRIPTION_API.getCategories();
+      console.log('✅ 카테고리 데이터 가져오기 성공:', response.data);
+
       setCategories(response.data);
     } catch (error) {
       showError('카테고리 데이터를 불러오는데 실패했습니다.');
@@ -85,34 +111,12 @@ function SubscriptionPage() {
     loadInitialData();
   }, []);
 
-  // 지출해야 할 것 필터링 (MEXP_STATUS = 'PENDING' or 'OVERDUE', MEXP_RPT = 'T')
+  // 지출해야 할 것 필터링
   const getPendingPayments = () => {
-    const oneMonthFromNow = new Date(today);
-    oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
-
-    const oneWeekAgo = new Date(today);
-    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-
-    return expenses.filter((expense) => {
-      // 구독만 (MEXP_RPT = 'T')
-      if (expense.mexpRpt !== 'T') return false;
-
-      // 예정 또는 연체 상태만
-      if (!['PENDING', 'OVERDUE'].includes(expense.mexpStatus)) return false;
-
-      const dueDate = new Date(expense.mexpRptdd);
-
-      // OVERDUE: 지출 예정일이 지났고, 일주일 전까지 표시
-      if (expense.mexpStatus === 'OVERDUE') {
-        return dueDate >= oneWeekAgo && dueDate < today;
-      }
-
-      // PENDING: 한달 이내 예정일
-      return dueDate >= today && dueDate <= oneMonthFromNow;
-    });
+    return subscriptionUtils.getPendingPayments(allExpenses);
   };
 
-  // 3일 내 지출 예정 필터링 (3일 전부터 오늘까지)
+  // 3일 내 지출 예정 필터링
   const getThreeDaysPendingPayments = () => {
     const threeDaysFromNow = new Date(today);
     threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
@@ -133,7 +137,7 @@ function SubscriptionPage() {
     });
   };
 
-  // 필터링된 지출 예정 데이터 가져오기
+  // 필터링된 지출 예정 데이터
   const getFilteredPendingPayments = () => {
     switch (filterWay) {
       case filterStyle.THREE_DAYS:
@@ -144,69 +148,13 @@ function SubscriptionPage() {
     }
   };
 
-  // 지출한 것 필터링 (MEXP_STATUS = 'COMPLETED', MEXP_RPT = 'T', 최근 일주일)
+  // 지출 완료된 것 필터링
   const getCompletedPayments = () => {
-    const threeDaysAgo = new Date(today);
-    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-
-    return expenses.filter((expense) => {
-      // 현재 로그인한 유저의 데이터만 (user001로 하드코딩되어 있음)
-      if (expense.mexpMmemId !== 'user001') return false;
-
-      // 구독만 (MEXP_RPT = 'T')
-      if (expense.mexpRpt !== 'T') return false;
-
-      // 완료된 것만
-      if (expense.mexpStatus !== 'COMPLETED') return false;
-
-      // 실제 지출일이 있어야 함
-      if (!expense.mexpDt) return false;
-
-      // 실제 지출일이 3일 전부터 오늘까지
-      const expenseDate = new Date(expense.mexpDt);
-      return expenseDate >= threeDaysAgo && expenseDate <= today;
-    });
+    const currentUserId = getCurrentUserId();
+    return subscriptionUtils.getCompletedPayments(allExpenses, currentUserId);
   };
 
-  // 예정일과 현재 날짜 비교해서 상태 정보 계산
-  const getDueStatus = (expense) => {
-    const dueDate = new Date(expense.mexpRptdd);
-    const diffDays = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
-
-    if (expense.mexpStatus === 'OVERDUE') {
-      return {
-        color: '#FF4D4D',
-        text: `${Math.abs(diffDays)}일 지남`,
-        icon: <FaExclamationTriangle size={10} />,
-      };
-    }
-
-    if (diffDays === 0) return { color: '#FF9800', text: '오늘', icon: <FaClock size={10} /> };
-    if (diffDays <= 3)
-      return { color: '#FF9800', text: `${diffDays}일 후`, icon: <FaClock size={10} /> };
-    return { color: '#666', text: `${diffDays}일 후`, icon: <FaClock size={10} /> };
-  };
-
-  // 카테고리별 지출 차트 데이터 계산 (완료된 지출 기준)
-  const getChartData = () => {
-    const categoryTotals = {};
-
-    getCompletedPayments().forEach((expense) => {
-      const categoryName = expense.categoryName;
-      if (!categoryTotals[categoryName]) {
-        categoryTotals[categoryName] = {
-          category: categoryName,
-          amount: 0,
-          color: expense.categoryColor,
-        };
-      }
-      categoryTotals[categoryName].amount += expense.mexpAmt;
-    });
-
-    return Object.values(categoryTotals);
-  };
-
-  // 정렬 함수 (OVERDUE 항상 최상단)
+  // 정렬 함수
   const getSortedPendingPayments = () => {
     const filteredPayments = getFilteredPendingPayments();
 
@@ -214,7 +162,7 @@ function SubscriptionPage() {
     const overduePayments = filteredPayments.filter((expense) => expense.mexpStatus === 'OVERDUE');
     const pendingPayments = filteredPayments.filter((expense) => expense.mexpStatus === 'PENDING');
 
-    // OVERDUE는 예정일이 오래된 순으로 정렬 (가장 늦은 것부터)
+    // OVERDUE는 예정일이 오래된 순으로 정렬
     const sortedOverdue = overduePayments.sort(
       (a, b) => new Date(a.mexpRptdd) - new Date(b.mexpRptdd),
     );
@@ -236,7 +184,6 @@ function SubscriptionPage() {
         break;
     }
 
-    // OVERDUE를 항상 맨 위에, 그 다음 PENDING
     return [...sortedOverdue, ...sortedPending];
   };
 
@@ -253,15 +200,23 @@ function SubscriptionPage() {
     return getPendingPayments().filter((expense) => expense.mexpStatus === 'OVERDUE').length;
   };
 
+  // 카테고리별 지출 차트 데이터
+  const getChartData = () => {
+    const completedPayments = getCompletedPayments();
+    return subscriptionUtils.getChartData(completedPayments);
+  };
+
   // 지출 완료 처리
   const handleCompletePayment = async (expense) => {
     try {
-      const response = await apiService.SUBSCRIPTION.completePayment(expense.mexpId);
+      console.log('💳 결제 완료 처리 시작:', expense.mexpId);
 
-      // 로컬 상태 업데이트 대신 서버에서 데이터 다시 가져오기
+      const response = await BACK_SUBSCRIPTION_API.completePayment(expense.mexpId);
+
+      // 서버에서 데이터 다시 가져오기
       await fetchSubscriptions();
 
-      showSuccess(response.message);
+      showSuccess(response.message || '결제가 완료되었습니다!');
     } catch (error) {
       showError(error.message || '결제 처리 중 오류가 발생했습니다.');
       console.error('Payment completion error:', error);
@@ -286,13 +241,13 @@ function SubscriptionPage() {
 
       if (editingSubscription) {
         // 수정 모드
-        response = await apiService.SUBSCRIPTION.updateSubscription(
+        response = await BACK_SUBSCRIPTION_API.updateSubscription(
           editingSubscription.mexpId,
           formData,
         );
       } else {
         // 추가 모드
-        response = await apiService.SUBSCRIPTION.addSubscription(formData);
+        response = await BACK_SUBSCRIPTION_API.addSubscription(formData);
       }
 
       // 서버에서 최신 데이터 가져오기
@@ -322,7 +277,7 @@ function SubscriptionPage() {
       mexpDec: expense.mexpDec,
       mexpAmt: expense.mexpAmt.toString(),
       mexpRptdd: expense.mexpRptdd,
-      mcatId: expense.mcatId.toString(),
+      mcatId: expense.mcatId ? expense.mcatId.toString() : '',
     });
     setIsModalOpen(true);
     showInfo(`${expense.mexpDec} 구독을 수정합니다.`);
@@ -330,11 +285,11 @@ function SubscriptionPage() {
 
   // 구독 삭제
   const handleDeleteSubscription = async (mexpId) => {
-    const expense = expenses.find((item) => item.mexpId === mexpId);
+    const expense = allExpenses.find((item) => item.mexpId === mexpId);
 
     if (window.confirm(`'${expense?.mexpDec}' 구독을 정말로 삭제하시겠습니까?`)) {
       try {
-        const response = await apiService.SUBSCRIPTION.deleteSubscription(mexpId);
+        const response = await BACK_SUBSCRIPTION_API.deleteSubscription(mexpId);
 
         // 서버에서 최신 데이터 가져오기
         await fetchSubscriptions();
@@ -360,7 +315,7 @@ function SubscriptionPage() {
     showInfo('새로운 구독을 추가해보세요! ✨');
   };
 
-  // 정렬 방식 변경 핸들러
+  // 정렬 방식 변경
   const handleSortChange = (newSortType) => {
     setAlignWay(newSortType);
 
@@ -373,7 +328,7 @@ function SubscriptionPage() {
     showInfo(sortMessages[newSortType]);
   };
 
-  // 필터 방식 변경 핸들러
+  // 필터 방식 변경
   const handleFilterChange = (newFilterType) => {
     setFilterWay(newFilterType);
 
@@ -395,7 +350,7 @@ function SubscriptionPage() {
         showWarning(`${overdueCount}개의 구독료가 연체되었습니다! 확인해주세요. ⚠️`);
       }, 1000);
     }
-  }, [loading, expenses]);
+  }, [loading, allExpenses]);
 
   if (loading) {
     return (
@@ -420,102 +375,41 @@ function SubscriptionPage() {
         <S.LeftColumn>
           {/* 정렬 및 필터 버튼들 */}
           <S.SortButtonContainer>
-            {/* 정렬 버튼들 */}
             <S.SortButton
               $isActive={alignWay === alignStyle.LATEST}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('버튼 클릭됨: LATEST');
-                handleSortChange(alignStyle.LATEST);
-              }}
-              style={{
-                pointerEvents: 'auto',
-                zIndex: 10,
-                position: 'relative',
-              }}
+              onClick={() => handleSortChange(alignStyle.LATEST)}
             >
               <FaClock size={12} />
               결제예정일순
             </S.SortButton>
             <S.SortButton
               $isActive={alignWay === alignStyle.HIGHEST}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('버튼 클릭됨: HIGHEST');
-                handleSortChange(alignStyle.HIGHEST);
-              }}
-              style={{
-                pointerEvents: 'auto',
-                zIndex: 10,
-                position: 'relative',
-              }}
+              onClick={() => handleSortChange(alignStyle.HIGHEST)}
             >
               <FaSortAmountDown size={12} />
               높은 금액순
             </S.SortButton>
             <S.SortButton
               $isActive={alignWay === alignStyle.NAMING}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('버튼 클릭됨: NAMING');
-                handleSortChange(alignStyle.NAMING);
-              }}
-              style={{
-                pointerEvents: 'auto',
-                zIndex: 10,
-                position: 'relative',
-              }}
+              onClick={() => handleSortChange(alignStyle.NAMING)}
             >
               <FaSortAlphaDown size={12} />
               이름순
             </S.SortButton>
 
-            {/* 구분선 */}
             <div
-              style={{
-                width: '1px',
-                height: '24px',
-                backgroundColor: '#e0e0e0',
-                margin: '0 8px',
-              }}
-            ></div>
+              style={{ width: '1px', height: '24px', backgroundColor: '#e0e0e0', margin: '0 8px' }}
+            />
 
-            {/* 필터 버튼들 */}
             <S.SortButton
               $isActive={filterWay === filterStyle.ALL}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('필터 클릭됨: ALL');
-                handleFilterChange(filterStyle.ALL);
-              }}
-              style={{
-                backgroundColor: filterWay === filterStyle.ALL ? '#e3f2fd' : 'white',
-                pointerEvents: 'auto',
-                zIndex: 10,
-                position: 'relative',
-              }}
+              onClick={() => handleFilterChange(filterStyle.ALL)}
             >
               📋 전체
             </S.SortButton>
             <S.SortButton
               $isActive={filterWay === filterStyle.THREE_DAYS}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('필터 클릭됨: THREE_DAYS');
-                handleFilterChange(filterStyle.THREE_DAYS);
-              }}
-              style={{
-                backgroundColor: filterWay === filterStyle.THREE_DAYS ? '#fff3e0' : 'white',
-                color: filterWay === filterStyle.THREE_DAYS ? '#f57c00' : '#666',
-                pointerEvents: 'auto',
-                zIndex: 10,
-                position: 'relative',
-              }}
+              onClick={() => handleFilterChange(filterStyle.THREE_DAYS)}
             >
               ⚡ 3일 내
             </S.SortButton>
@@ -526,19 +420,14 @@ function SubscriptionPage() {
             <h3>
               💰 지출해야 할 것{filterWay === filterStyle.THREE_DAYS ? '(3 DAYS)' : '(전체)'}
               <span
-                style={{
-                  marginLeft: '8px',
-                  fontSize: '14px',
-                  color: '#666',
-                  fontWeight: 'normal',
-                }}
+                style={{ marginLeft: '8px', fontSize: '14px', color: '#666', fontWeight: 'normal' }}
               >
                 {getSortedPendingPayments().length}개
               </span>
             </h3>
             <S.SubscriptionList>
               {getSortedPendingPayments().map((expense) => {
-                const dueStatus = getDueStatus(expense);
+                const dueStatus = subscriptionUtils.getDueStatus(expense);
                 return (
                   <S.SubscriptionCard
                     key={expense.mexpId}
@@ -553,10 +442,7 @@ function SubscriptionPage() {
                         <S.SubscriptionTextInfo>
                           <h4>{expense.mexpDec}</h4>
                           <p>
-                            {expense.categoryName} • 예정일:{' '}
-                            {typeof expense.mexpRptdd === 'string'
-                              ? expense.mexpRptdd
-                              : expense.mexpRptdd.toISOString().split('T')[0]}
+                            {expense.categoryName} • 예정일: {expense.mexpRptdd}
                           </p>
                           <p className="sub-info" style={{ color: dueStatus.color }}>
                             {dueStatus.icon} {dueStatus.text} • ID: {expense.mexpId}
@@ -598,10 +484,25 @@ function SubscriptionPage() {
                   </S.SubscriptionCard>
                 );
               })}
+
+              {getSortedPendingPayments().length === 0 && (
+                <div
+                  style={{
+                    textAlign: 'center',
+                    color: '#666',
+                    padding: '40px 20px',
+                    fontSize: '14px',
+                  }}
+                >
+                  {filterWay === filterStyle.THREE_DAYS
+                    ? '3일 내 지출 예정인 구독이 없습니다.'
+                    : '지출 예정인 구독이 없습니다.'}
+                </div>
+              )}
             </S.SubscriptionList>
           </S.SubscriptionListContainer>
 
-          {/* 지출한 것 */}
+          {/* 지출 완료 */}
           <S.SubscriptionListContainer style={{ marginTop: '20px' }}>
             <h3>✅ 지출 완료 (최근 3일)</h3>
             <S.SubscriptionList>
@@ -618,16 +519,10 @@ function SubscriptionPage() {
                         <S.SubscriptionTextInfo>
                           <h4>{expense.mexpDec}</h4>
                           <p>
-                            {expense.categoryName} • 지출일:{' '}
-                            {typeof expense.mexpDt === 'string'
-                              ? expense.mexpDt
-                              : expense.mexpDt.toISOString().split('T')[0]}
+                            {expense.categoryName} • 지출일: {expense.mexpDt}
                           </p>
                           <p className="sub-info">
-                            예정일:{' '}
-                            {typeof expense.mexpRptdd === 'string'
-                              ? expense.mexpRptdd
-                              : expense.mexpRptdd.toISOString().split('T')[0]}
+                            예정일: {expense.mexpRptdd}
                             {delayDays > 0 && (
                               <span style={{ color: '#FF9800', marginLeft: '8px' }}>
                                 ({delayDays}일 늦음)
@@ -657,7 +552,6 @@ function SubscriptionPage() {
                 );
               })}
 
-              {/* 지출 완료 데이터가 없을 때 */}
               {getCompletedPayments().length === 0 && (
                 <div
                   style={{
@@ -742,7 +636,7 @@ function SubscriptionPage() {
             <h2>{editingSubscription ? '구독 수정' : '구독 추가'}</h2>
             <form onSubmit={handleAddOrUpdateSubscription}>
               <S.FormGroup>
-                <S.Label>구독 서비스 설명 (MEXP_DEC)</S.Label>
+                <S.Label>구독 서비스 설명</S.Label>
                 <S.Input
                   type="text"
                   name="mexpDec"
@@ -754,7 +648,7 @@ function SubscriptionPage() {
               </S.FormGroup>
 
               <S.FormGroup>
-                <S.Label>카테고리 (MCAT_ID)</S.Label>
+                <S.Label>카테고리</S.Label>
                 <S.Select
                   name="mcatId"
                   value={formData.mcatId}
@@ -768,10 +662,15 @@ function SubscriptionPage() {
                     </option>
                   ))}
                 </S.Select>
+                {categories.length === 0 && (
+                  <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                    💡 카테고리가 없습니다. 가계부 페이지에서 카테고리를 먼저 추가해주세요.
+                  </div>
+                )}
               </S.FormGroup>
 
               <S.FormGroup>
-                <S.Label>월 구독료 (MEXP_AMT)</S.Label>
+                <S.Label>월 구독료 (원)</S.Label>
                 <S.Input
                   type="number"
                   name="mexpAmt"
@@ -783,7 +682,7 @@ function SubscriptionPage() {
               </S.FormGroup>
 
               <S.FormGroup>
-                <S.Label>지출 예정일 (MEXP_RPTDD)</S.Label>
+                <S.Label>지출 예정일</S.Label>
                 <S.Input
                   type="date"
                   name="mexpRptdd"
@@ -794,7 +693,7 @@ function SubscriptionPage() {
               </S.FormGroup>
 
               <S.ButtonRow>
-                <S.SubmitButton type="submit">
+                <S.SubmitButton type="submit" disabled={categories.length === 0}>
                   {editingSubscription ? '수정' : '추가'}
                 </S.SubmitButton>
                 <S.CancelButton type="button" onClick={() => setIsModalOpen(false)}>

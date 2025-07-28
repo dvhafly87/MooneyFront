@@ -27,21 +27,57 @@ export default function ChatBotModal({ onClose }) {
 
   const userinfoget = async () => {
     try {
-      const savedLoginState = localStorage.getItem('loginUser');
-      const parsedData = JSON.parse(savedLoginState);
-      if (!parsedData?.loginId) throw new Error('로그인 정보를 확인할 수 없습니다.');
+      const savedLoginState = localStorage.getItem('isYouLogined');
 
-      const response = await fetch('http://localhost:7474/do.MeminfoCheck', {
+      console.log(savedLoginState);
+
+      let parsedState = {};
+
+      if (savedLoginState) {
+        parsedState = JSON.parse(savedLoginState);
+        console.log(parsedState);
+        // 출력: { nick: "고먐미", id: "hhhh234", point: 0 }
+
+        console.log(parsedState.nick); // 고먐미
+      } else {
+        console.log('로그인 상태가 저장되어 있지 않습니다.');
+      }
+
+      // const parsedData = {}
+
+      // try {
+      //   parsedData = JSON.parse(savedLoginState);
+      // } catch (err) {
+      //   throw new Error('❌ loginUser 파싱 실패');
+      // }
+
+      // console.log('🟢 parsedData:', parsedData.id);
+
+      // if (!parsedData?.id) {
+      //   throw new Error('❌ loginId 없음');
+      // }
+
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/do.MeminfoCheck`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ regid: parsedData.loginId }),
+        body: JSON.stringify({
+          regid: parsedState.id,
+        }),
       });
+
+      console.log('lalalalalal', response);
+
       const result = await response.json();
-      if (!result?.Meminfo) throw new Error('사용자 정보를 찾을 수 없습니다.');
-      setUserinfo(result.Meminfo);
+      console.log('✅ 사용자 정보 응답:', result);
+
+      if (!result?.Meminfo) {
+        throw new Error('❌ 사용자 정보를 찾을 수 없습니다.');
+      }
+
+      setUserinfo(result?.Meminfo);
     } catch (error) {
-      console.error(error.message);
+      console.error('🚨 userinfoget 오류:', error.message);
     }
   };
 

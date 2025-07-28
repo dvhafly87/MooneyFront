@@ -1,3 +1,4 @@
+// src/styles/userPage.style.js
 import styled from '@emotion/styled';
 
 // 메인 페이지 컨테이너
