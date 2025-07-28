@@ -82,10 +82,10 @@ const LoadingScreen = ({ message = '로딩 중...' }) => (
 function AppRouter() {
   const { isAuthenticated, loading, initialCheckDone } = useAuth();
 
-  // 🔥 초기 체크가 완료되지 않았으면 로딩
-  if (!initialCheckDone) {
-    return <LoadingScreen message="앱 초기화 중..." />;
-  }
+  // // 🔥 초기 체크가 완료되지 않았으면 로딩
+  // if (!initialCheckDone) {
+  //   return <LoadingScreen message="앱 초기화 중..." />;
+  // }
 
   // 🔥 로딩 중이면 로딩 화면
   if (loading) {

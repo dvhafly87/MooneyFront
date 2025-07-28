@@ -7,7 +7,7 @@ import '../css/homepage.css';
 import chatImg from '../img/chatbotmooney.png';
 import ChatBotModal from '../components/ChatBotModal';
 
-const BASE_URL = 'http://192.168.0.20:7474';
+const BASE_URL = 'http://localhost:7474';
 const MEMBER_ID = 'hhhh234';
 
 function HomePage() {

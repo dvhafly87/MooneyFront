@@ -4,8 +4,8 @@ import 'react-calendar/dist/Calendar.css';
 import '../css/AccountBook.css';
 import noExpImg from '../img/no_exp.png';
 
-const BASE_URL = 'http://192.168.0.20:7474';
-const MEMBER_ID = 'hhhh234';
+const BASE_URL = 'http://localhost:7474';
+let MEMBER_ID = null;
 
 const AccountBookPage = () => {
   const [date, setDate] = useState(new Date());
@@ -53,9 +53,29 @@ const AccountBookPage = () => {
     }
   };
 
+  const getUserinfo = () => {
+    const savedLoginState = localStorage.getItem('isYouLogined');
+
+    console.log(savedLoginState);
+
+    let parsedState = {};
+
+    if (savedLoginState) {
+      parsedState = JSON.parse(savedLoginState);
+      console.log(parsedState);
+      // 출력: { nick: "고먐미", id: "hhhh234", point: 0 }
+      console.log(parsedState.nick); // 고먐미
+      MEMBER_ID = parsedState.id;
+    } else {
+      console.log('로그인 상태가 저장되어 있지 않습니다.');
+    }
+  }
+
   useEffect(() => {
+    getUserinfo();
     fetchCategories();
     fetchEntriesByDate(date);
+    alert(MEMBER_ID);
   }, []);
 
   const handleDateChange = (d) => {
@@ -79,6 +99,7 @@ const AccountBookPage = () => {
       mexpStatus: 'COMPLETED',
       memberId: MEMBER_ID,
     };
+
     try {
       if (editTarget) {
         await fetch(`${BASE_URL}/expenses/member/${MEMBER_ID}?mcatId=${selectedCategoryId}`, {
@@ -135,13 +156,12 @@ const AccountBookPage = () => {
   const handleAddCategory = async () => {
     if (!customCategory.trim()) return;
     try {
-      await fetch(`${BASE_URL}/categories`, {
+      await fetch(`${BASE_URL}/categories/member/${MEMBER_ID}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mcatName: customCategory,
           mcatColor: '#AAAAAA',
-          mcatId: Date.now().toString(),
           memberId: MEMBER_ID,
         }),
       });
