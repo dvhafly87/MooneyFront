@@ -140,6 +140,70 @@ export const getProfileImageUrl = (photoName) => {
   return `${SERVER_URL}/member.photo/${photoName}`;
 };
 
+// 🔥 비밀번호 확인 API (완전한 구현)
+const verifyPassword = async (loginId, password) => {
+  return await apiCall('/do.passwordcheck', {
+    method: 'POST',
+    body: JSON.stringify({
+      regid: loginId,
+      regpw: password,
+    }),
+  });
+};
+
+// 🔥 이메일 인증코드 발송 API (백엔드에 맞게 수정)
+const sendVerificationEmail = async (email) => {
+  // 백엔드에서 @RequestParam("email")을 사용하므로 FormData 사용
+  const formData = new FormData();
+  formData.append('email', email);
+
+  try {
+    const result = await apiCall('/mailSend', {
+      method: 'POST',
+      headers: {}, // FormData일 때는 Content-Type 헤더 제거
+      body: formData,
+    });
+
+    // 백엔드 응답을 프론트엔드에서 사용하기 쉬운 형태로 변환
+    if (result.success) {
+      return {
+        success: true,
+        message: '인증코드가 발송되었습니다.',
+        __dev_code: result.number, // 개발용 코드 표시
+      };
+    } else {
+      throw new Error(result.error || '이메일 발송에 실패했습니다.');
+    }
+  } catch (error) {
+    throw new Error(error.message || '이메일 발송 중 오류가 발생했습니다.');
+  }
+};
+
+// 🔥 이메일 인증코드 확인 API (백엔드에 맞게 수정)
+const verifyEmailCode = async (email, code) => {
+  try {
+    // 백엔드에서 RegIdCheck 객체의 regan 필드를 사용
+    const result = await apiCall('/mailCheck', {
+      method: 'POST',
+      body: JSON.stringify({
+        regan: code, // 백엔드에서 getRegan()으로 받는 필드
+      }),
+    });
+
+    // 백엔드 응답을 프론트엔드에서 사용하기 쉬운 형태로 변환
+    if (result.finalMessage) {
+      return {
+        success: true,
+        message: '이메일 인증이 완료되었습니다.',
+      };
+    } else {
+      throw new Error('인증코드가 올바르지 않습니다.');
+    }
+  } catch (error) {
+    throw new Error(error.message || '이메일 인증 중 오류가 발생했습니다.');
+  }
+};
+
 // 🔥 전체 API 객체
 const userApi = {
   login,
@@ -152,6 +216,9 @@ const userApi = {
   updateUserInfo,
   deleteAccount,
   getProfileImageUrl,
+  verifyPassword,
+  sendVerificationEmail,
+  verifyEmailCode,
 };
 
 export default userApi;
