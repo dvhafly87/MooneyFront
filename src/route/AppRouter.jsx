@@ -162,7 +162,7 @@ function AppRouter() {
         </>
       ) : (
         /* 🚫 인증되지 않은 경우 - 로그인 필요 페이지로 */
-        <Route path="*" element={<LoginRequiredPage />} />
+        <Route path="*" element={<LoginPage />} />
       )}
     </Routes>
   );

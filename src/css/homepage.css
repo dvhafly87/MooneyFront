@@ -8,12 +8,12 @@ body {
 .homepage-container {
   transition: margin-left 0.3s ease;
   margin-left: 0;
-  padding-top: 50px;
+  /* padding-top: 50px; */
 }
 
-.homepage-container.sidebar-open {
+/* .homepage-container.sidebar-open {
   margin-left: 260px;
-}
+} */
 
 .main-content-wrapper {
   display: flex;
@@ -34,13 +34,14 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 781px; /* ✅ left-column과 동일하게 */
+  height: 800px; /* ✅ left-column과 동일하게 */
+  margin-top: 50px;
 }
 
 
 .calender-container {
-  width: 574px;
-  height: 781px;
+  width: 800px;
+  height: 900px;
   border-radius: 50px;
   background-color: #7898B1;
   text-align: center;

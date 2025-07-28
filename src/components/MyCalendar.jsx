@@ -4,7 +4,12 @@ import '../css/calendar.css';
 
 function MyCalendar({ value, onChange, financeData }) {
   function formatDate(date) {
-    return date.toISOString().split('T')[0];
+    const year = date.getFullYear();
+    // getMonth()는 0부터 시작하므로 1을 더해줍니다.
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+
   }
 
   return (

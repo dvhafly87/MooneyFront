@@ -540,7 +540,7 @@ function LoginPage() {
         </motion.button>
       </motion.div>
 
-      <motion.div
+      {/* <motion.div
         variants={itemVariants}
         style={{
           textAlign: 'center',
@@ -555,7 +555,7 @@ function LoginPage() {
         }}
       >
         <p style={{ margin: 0, fontWeight: '600', color: '#495057' }}>테스트 계정: admin / 1234</p>
-      </motion.div>
+      </motion.div> */}
     </motion.div>
   );
 
