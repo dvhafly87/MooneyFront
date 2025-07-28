@@ -1,0 +1,186 @@
+/* homepage.css */
+body {
+  background-color: #FAFAFA;
+  margin: 0;
+  padding: 0;
+}
+
+.homepage-container {
+  transition: margin-left 0.3s ease;
+  margin-left: 0;
+  padding-top: 50px;
+}
+
+.homepage-container.sidebar-open {
+  margin-left: 260px;
+}
+
+.main-content-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 40px; /* 그대로 두거나 36px로 약간 줄여도 무방 */
+  padding: 20px 40px;
+}
+
+.left-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px; /* ✅ 달력과 그래프 사이 여백 */
+}
+
+.right-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 781px; /* ✅ left-column과 동일하게 */
+}
+
+
+.calender-container {
+  width: 574px;
+  height: 781px;
+  border-radius: 50px;
+  background-color: #7898B1;
+  text-align: center;
+  display: flex;            /* ✅ 내부 달력+그래프 세로 정렬 */
+  flex-direction: column;
+  align-items: center;
+  justify-content: start;
+  padding-top: 20px;        /* ✅ 내부 여백 (달력 위쪽) */
+  box-sizing: border-box;
+}
+
+.income-card,
+.outcome-card {
+  height: 170px;
+  width: 342px;
+  background-color: #F4F4F4;
+  border-radius: 30px;
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  padding: 20px;
+  display: flex;
+  flex-direction: row; /* ✅ 가로 정렬 */
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.income-card-left,
+.outcome-card-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.income-card:hover,
+.outcome-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.icome-card-title,
+.outcome-card-title {
+  font-weight: bold;
+  font-size: 18px;
+  margin: 30;
+}
+
+.income-card-amount {
+  font-size: 30px;
+  color: #3C82F6;
+  margin-top: 8px;
+}
+.outcome-card-amount {
+  font-size: 30px;
+  color: #FF4D4D;
+  margin-top: 8px;
+}
+
+.income-card-chart,
+.outcome-card-chart{
+  width: 120px;
+  height: 120px;
+}
+
+.chatbot-mooney {
+  position: relative;
+  height: 170px;
+  width: 342px;
+  background-color: #f4f4f4;
+  border-radius: 30px;
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  padding: 20px;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-between;
+  overflow: visible;
+}
+
+.chatbot-bubble {
+  background: #e0e0e0;
+  border-radius: 25px;
+  padding: 20px;
+  max-width: 200px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #222;
+  position: relative;
+  box-shadow: inset 0px 0px 6px rgba(0, 0, 0, 0.15);
+  transform: translateY(-20px);
+}
+
+.chatbot-bubble::after {
+  content: '';
+  position: absolute;
+  right: -12px;
+  bottom: 20px;
+  width: 0;
+  height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 12px solid #e0e0e0;
+}
+
+.highlight {
+  color: #e53935;
+  font-weight: bold;
+}
+
+.chatbot-character {
+  height: 100px;
+  width: auto;
+}
+
+@media (max-width: 768px) {
+  .main-content-wrapper {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .right-column {
+    display: none;
+  }
+
+  .calender-container {
+    width: 90%;
+    height: auto;
+  }
+}
+
+.homepage-container:not(.sidebar-open) .main-content-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 60px;
+}
+
+.homepage-container:not(.sidebar-open) .calender-container {
+  width: 620px;
+}
+
+.homepage-container:not(.sidebar-open) .income-card,
+.homepage-container:not(.sidebar-open) .outcome-card,
+.homepage-container:not(.sidebar-open) .chatbot-mooney {
+  width: 380px;
+}

@@ -1,29 +1,24 @@
-import './App.css'
-import MNU from './img/Menu_Icon.png'
-import HMK from './img/HomeIcon.png'
-function App() {
+import './App.css';
+import { BrowserRouter } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import AppRouter from './route/AppRouter';
+import { AuthProvider } from './contexts/AuthContext';
+import { TOAST_CONTAINER_CONFIG } from './utils/toast';
 
-	return (
-		<>
-			<div className="Main-Container">
-				<div className="Side-Container">
-					<div className="Side-1-Container">
-						<p className="Proj-Title">Mooney</p>
-						<img className="MenuIcon" src={MNU} alt="menu_icon"/>
-					</div>
-					<div className="Side-2-Container">
-						<div className="Dashboard-Container">
-							<img src={HMK} alt="HomeIcon"/>
-							<span>Dashboard</span>
-						</div>
-					</div>
-				</div>
-				<div className="Content-Container">
-					
-				</div>
-			</div>
-		</>
-	)
+function App() {
+  return (
+    <div className="App">
+      <BrowserRouter>
+        <AuthProvider>
+          <AppRouter />
+
+          {/* 중앙 집중식 Toast 설정 사용 */}
+          <ToastContainer {...TOAST_CONTAINER_CONFIG} />
+        </AuthProvider>
+      </BrowserRouter>
+    </div>
+  );
 }
 
-export default App
+export default App;
