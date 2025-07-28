@@ -9,6 +9,13 @@
   padding: 20px;
   box-sizing: border-box;
   overflow: hidden;
+  margin-left: 50px;
+  margin-right: 50px;
+}
+
+.react-calendar.my-calendar {
+  margin-left: 0px;
+  margin-right: 0px;
 }
 
 /* 네비게이션 (월/년 이동) */

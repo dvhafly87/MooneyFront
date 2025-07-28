@@ -22,12 +22,12 @@ function UserPage() {
 
     setIsLoading(true);
     setError(null);
-
+    console.log('사용자 정보 조회 시작:', user.loginId);
     try {
       const result = await BACK_USER_API.getUserInfo(user.loginId);
 
-      if (result.success) {
-        setUserInfo(result.data.user);
+      if (result) {
+        setUserInfo(result.Meminfo);
       } else {
         setError('사용자 정보를 불러올 수 없습니다.');
       }
@@ -225,7 +225,7 @@ function UserPage() {
           <S.ProfileImageContainer>{renderProfileImage(userInfo.pphoto)}</S.ProfileImageContainer>
           <S.ProfileInfo>
             <S.Nickname>{userInfo.nick} 님</S.Nickname>
-            <S.InfoText>아이디: {userInfo.loginId}</S.InfoText>
+            <S.InfoText>아이디: {userInfo.id}</S.InfoText>
             <S.InfoText>가입일: {formatDate(userInfo.regd)}</S.InfoText>
             {userInfo.bir && <S.InfoText>생년월일: {formatDate(userInfo.bir)}</S.InfoText>}
           </S.ProfileInfo>

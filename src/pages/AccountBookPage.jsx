@@ -19,6 +19,8 @@ const AccountBookPage = () => {
   const [entries, setEntries] = useState({ income: [], expense: [] });
   const [editTarget, setEditTarget] = useState(null);
   const [repeat, setRepeat] = useState(false);
+  const [pendingType, setPendingType] = useState("");
+  const [freqType, setFreqType] = useState("");
 
   const formatDateKey = (d) => {
     const yyyy = d.getFullYear();
@@ -63,8 +65,7 @@ const AccountBookPage = () => {
     if (savedLoginState) {
       parsedState = JSON.parse(savedLoginState);
       console.log(parsedState);
-      // 출력: { nick: "고먐미", id: "hhhh234", point: 0 }
-      console.log(parsedState.nick); // 고먐미
+      console.log(parsedState.nick);
       MEMBER_ID = parsedState.id;
     } else {
       console.log('로그인 상태가 저장되어 있지 않습니다.');
@@ -75,7 +76,7 @@ const AccountBookPage = () => {
     getUserinfo();
     fetchCategories();
     fetchEntriesByDate(date);
-    alert(MEMBER_ID);
+    // alert(MEMBER_ID);
   }, []);
 
   const handleDateChange = (d) => {
@@ -96,11 +97,13 @@ const AccountBookPage = () => {
       mexpDec: memo,
       mexpType: type === '수입' ? 'I' : 'E',
       mexpRpt: repeat ? 'T' : 'F',
-      mexpStatus: 'COMPLETED',
+      mexpStatus: pendingType,
+      mexpFrequency: freqType,
       memberId: MEMBER_ID,
     };
 
     try {
+      alert(payload);
       if (editTarget) {
         await fetch(`${BASE_URL}/expenses/member/${MEMBER_ID}?mcatId=${selectedCategoryId}`, {
           method: 'PUT',
@@ -191,7 +194,7 @@ const AccountBookPage = () => {
       <div className="ledger-grid">
         <div className="ledger-left">
           <p className="ledger-date">{formatDate(date)}</p>
-          <Calendar value={date} onChange={handleDateChange} />
+          <Calendar className="my-calendar" value={date} onChange={handleDateChange} />
 
           {[
             { title: '수입', key: 'income' },
@@ -237,6 +240,7 @@ const AccountBookPage = () => {
               onChange={(e) => setAmount(e.target.value)}
             />
           </label>
+
           <div className="repeat-checkbox">
             <label htmlFor="repeat">💡 반복되는 지출인가요?</label>
             <input
@@ -245,6 +249,24 @@ const AccountBookPage = () => {
               checked={repeat}
               onChange={(e) => setRepeat(e.target.checked)}
             />
+          </div>
+
+          <div className="repeat-checkbox">
+            <label htmlFor="repeat">💡 지출 상태</label>
+            <select value={pendingType} onChange={(e) => setPendingType(e.target.value)}>
+              <option value='COMPLETED'>일시불</option>
+              <option value='PENDING'>지출 대기중</option>
+            </select>
+          </div>
+
+          <div className="repeat-checkbox">
+            <label htmlFor="repeat">💡 지출 타입</label>
+            <select value={freqType} onChange={(e) => setFreqType(e.target.value)}>
+              <option value='DAILY'>1회성 지출</option>
+              <option value='WEEKLY'>주간 지출</option>
+              <option value='MONTHLY'>월간 지출</option>
+              <option value='YEARLY'>연간 지출</option>
+            </select>
           </div>
 
           <label>카테고리 선택</label>

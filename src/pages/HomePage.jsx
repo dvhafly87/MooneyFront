@@ -7,8 +7,11 @@ import '../css/homepage.css';
 import chatImg from '../img/chatbotmooney.png';
 import ChatBotModal from '../components/ChatBotModal';
 
+
 const BASE_URL = 'http://localhost:7474';
 const MEMBER_ID = 'hhhh234';
+
+
 
 function HomePage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -21,7 +24,12 @@ function HomePage() {
   const fetchMonthlyData = async () => {
     const start = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
     const end = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
-    const format = (d) => d.toISOString().split('T')[0];
+    const format = (d) => {
+      const year = d.getFullYear();
+      const month = (d.getMonth() + 1).toString().padStart(2, '0'); // 월은 0부터 시작하므로 +1, 두 자리로 포맷
+      const day = d.getDate().toString().padStart(2, '0');         // 일은 두 자리로 포맷
+      return `${year}-${month}-${day}`;
+    };
 
     try {
       const res = await fetch(

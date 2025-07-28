@@ -1,5 +1,5 @@
 .chart-bar {
-  width: 520px; /* ✅ 달력과 통일 */
+  width: 700px; /* ✅ 달력과 통일 */
   height: 310px; /* ✅ 딱 맞는 비율 */
   background: #f7f6f5;
   border-radius: 20px;
@@ -8,4 +8,6 @@
   padding: 20px;
   box-sizing: border-box;
   margin: 10px auto 0 auto;
+  margin-left: 50px;
+  margin-right: 50px;
 }
