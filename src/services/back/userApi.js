@@ -25,6 +25,7 @@ const apiCall = async (endpoint, options = {}) => {
 
     // Content-Type에 따라 다르게 처리
     const contentType = response.headers.get('content-type');
+
     if (contentType && contentType.includes('application/json')) {
       const result = await response.json();
       console.log(`✅ API 응답: ${endpoint}`, result);
@@ -109,15 +110,15 @@ export const getUserInfo = async (loginId) => {
   });
 };
 
-// 🔥 회원정보 수정 API
-export const updateUserInfo = async (updateData, currentPassword, loginId) => {
+// 🔥 회원정보 수정 API - 수정됨
+export const updateUserInfo = async (loginId, updateData, currentPassword) => {
+
   const formData = new FormData();
   formData.append('eid', loginId);
   formData.append('ecurpw', currentPassword);
-
-  if (updateData.nickname) formData.append('enick', updateData.nickname);
-  if (updateData.password) formData.append('epw', updateData.password);
-  if (updateData.profilePhoto) formData.append('ephoto', updateData.profilePhoto);
+  formData.append('epw', updateData.password);
+  formData.append('enick', updateData.nickname);
+  formData.append('ephoto', updateData.profilePhoto);
 
   return await apiCall('/member.info.edit', {
     method: 'POST',
@@ -140,8 +141,8 @@ export const getProfileImageUrl = (photoName) => {
   return `${SERVER_URL}/member.photo/${photoName}`;
 };
 
-// 🔥 비밀번호 확인 API (완전한 구현)
-const verifyPassword = async (loginId, password) => {
+// 🔥 비밀번호 확인 API
+export const verifyPassword = async (loginId, password) => {
   return await apiCall('/do.passwordcheck', {
     method: 'POST',
     body: JSON.stringify({
@@ -151,9 +152,8 @@ const verifyPassword = async (loginId, password) => {
   });
 };
 
-// 🔥 이메일 인증코드 발송 API (백엔드에 맞게 수정)
-const sendVerificationEmail = async (email) => {
-  // 백엔드에서 @RequestParam("email")을 사용하므로 FormData 사용
+// 🔥 이메일 인증코드 발송 API
+export const sendVerificationEmail = async (email) => {
   const formData = new FormData();
   formData.append('email', email);
 
@@ -164,7 +164,6 @@ const sendVerificationEmail = async (email) => {
       body: formData,
     });
 
-    // 백엔드 응답을 프론트엔드에서 사용하기 쉬운 형태로 변환
     if (result.success) {
       return {
         success: true,
@@ -179,10 +178,9 @@ const sendVerificationEmail = async (email) => {
   }
 };
 
-// 🔥 이메일 인증코드 확인 API (백엔드에 맞게 수정)
-const verifyEmailCode = async (email, code) => {
+// 🔥 이메일 인증코드 확인 API
+export const verifyEmailCode = async (email, code) => {
   try {
-    // 백엔드에서 RegIdCheck 객체의 regan 필드를 사용
     const result = await apiCall('/mailCheck', {
       method: 'POST',
       body: JSON.stringify({
@@ -190,7 +188,6 @@ const verifyEmailCode = async (email, code) => {
       }),
     });
 
-    // 백엔드 응답을 프론트엔드에서 사용하기 쉬운 형태로 변환
     if (result.finalMessage) {
       return {
         success: true,

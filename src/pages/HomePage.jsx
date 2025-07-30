@@ -9,9 +9,8 @@ import ChatBotModal from '../components/ChatBotModal';
 
 
 const BASE_URL = 'http://localhost:7474';
-const MEMBER_ID = 'hhhh234';
 
-
+let MEMBER_ID = null;
 
 function HomePage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -71,7 +70,26 @@ function HomePage() {
     setDayDetail(data);
   };
 
+  const getUserinfo = () => {
+    const savedLoginState = localStorage.getItem('isYouLogined');
+
+    console.log(savedLoginState);
+
+    let parsedState = {};
+
+    if (savedLoginState) {
+      parsedState = JSON.parse(savedLoginState);
+      console.log(parsedState);
+      console.log(parsedState.nick);
+      MEMBER_ID = parsedState.id;
+      console.log(`idget${parsedState.id}`)
+    } else {
+      console.log('로그인 상태가 저장되어 있지 않습니다.');
+    }
+  }
+
   useEffect(() => {
+    getUserinfo();
     fetchMonthlyData();
   }, [selectedDate]);
 

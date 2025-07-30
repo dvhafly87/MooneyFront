@@ -209,7 +209,7 @@ function LoginPage() {
     }
 
     if (!isIdChecked) {
-      toast.error('아이디 중복확인을 해주세요!');
+      toast.error('아이디 중복체크를 진행해라!');
       return;
     }
 
@@ -270,13 +270,15 @@ function LoginPage() {
 
     try {
       const result = await checkIdDuplicate(formData.id);
-      if (result.available) {
+
+      if (result.idpossible) {
         toast.success(result.message);
         setIsIdChecked(true);
       } else {
         toast.error(result.message);
         setIsIdChecked(false);
       }
+
     } catch (error) {
       toast.error('아이디 중복 확인 중 오류가 발생했습니다.');
       setIsIdChecked(false);
@@ -292,7 +294,7 @@ function LoginPage() {
 
     try {
       const result = await checkNicknameDuplicate(formData.nickname);
-      if (result.available) {
+      if (result.nickpossible) {
         toast.success(result.message);
         setIsNicknameChecked(true);
       } else {
@@ -405,6 +407,7 @@ function LoginPage() {
               value={formData.id}
               onChange={handleInputChange}
               placeholder="아이디를 입력하세요"
+              disabled={isIdChecked} // 중복확인 통과 시 비활성
             />
           </motion.div>
         </S.InputGroup>
@@ -421,7 +424,6 @@ function LoginPage() {
             />
           </motion.div>
         </S.InputGroup>
-
         <motion.button
           type="submit"
           disabled={loading}

@@ -42,7 +42,7 @@ const WithdrawalPage = () => {
     try {
       const result = await BACK_USER_API.verifyPassword(user.loginId, password);
 
-      if (result.success) {
+      if (result.pwpossible) {
         setCurrentStep(2);
         toast.success('비밀번호가 확인되었습니다.');
       } else {
@@ -69,9 +69,8 @@ const WithdrawalPage = () => {
     try {
       const result = await BACK_USER_API.deleteAccount(password);
 
-      if (result.success) {
+      if (result.resultD) {
         setCurrentStep(3);
-
         // 🔥 회원탈퇴 성공 시 useAuth의 logout 호출하여 상태 정리
         await logout();
 

@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import useAuth from '../contexts/useAuth.jsx';
 import BACK_USER_API from '../services/back/userApi.js';
 import { ROUTES } from '../route/routes.js';
-import S from '../styles/modifyUserPage.style.js'; // 🔥 스타일 import
+import S from '../styles/modifyUserPage.style.js';
 
 const ModifyUserPage = () => {
   const navigate = useNavigate();
@@ -15,11 +15,12 @@ const ModifyUserPage = () => {
 
   // 폼 데이터 상태
   const [formData, setFormData] = useState({
-    currentPassword: '', // 🔥 현재 비밀번호 (필수)
+    currentPassword: '',
     nickname: user?.nick || '',
     newPassword: '',
     confirmPassword: '',
-    profilePhoto: user?.pphoto || null,
+    profilePhoto: null, // 🔥 File 객체를 저장
+    profilePhotoPreview: null, // 🔥 미리보기용 URL
   });
 
   const [isNicknameChecked, setIsNicknameChecked] = useState(true);
@@ -45,8 +46,9 @@ const ModifyUserPage = () => {
     }
   };
 
-  // 🔥 닉네임 중복 확인
+  // 닉네임 중복 확인
   const handleNicknameCheck = async () => {
+
     if (!formData.nickname.trim()) {
       toast.error('닉네임을 입력해주세요!');
       return;
@@ -63,7 +65,7 @@ const ModifyUserPage = () => {
     try {
       const result = await BACK_USER_API.checkNicknameDuplicate(formData.nickname);
 
-      if (result.available) {
+      if (result.nickpossible) {
         toast.success(result.message);
         setIsNicknameChecked(true);
       } else {
@@ -79,9 +81,10 @@ const ModifyUserPage = () => {
     }
   };
 
-  // 프로필 사진 변경
+  // 🔥 프로필 사진 변경 - File 객체 직접 저장
   const handleProfileImageChange = (e) => {
     const file = e.target.files[0];
+
     if (file) {
       // 파일 크기 체크 (5MB 제한)
       if (file.size > 5 * 1024 * 1024) {
@@ -95,31 +98,41 @@ const ModifyUserPage = () => {
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setFormData((prev) => ({
-          ...prev,
-          profilePhoto: event.target.result,
-        }));
-      };
-      reader.readAsDataURL(file);
+      // File 객체와 미리보기 URL 저장
+      setFormData((prev) => ({
+        ...prev,
+        profilePhoto: file,
+        profilePhotoPreview: URL.createObjectURL(file),
+      }));
+
       toast.success('프로필 사진이 선택되었습니다.');
     }
   };
 
-  // 🔥 이미지 렌더링 함수
-  const renderProfileImage = (pphoto) => {
-    const hasImage = pphoto && (pphoto.startsWith('data:') || pphoto.trim() !== '');
+  // 🔥 이미지 렌더링 함수 수정
+  const renderProfileImage = () => {
+    // 새로 선택한 이미지가 있으면 미리보기 표시
+    if (formData.profilePhotoPreview) {
+      return (
+        <S.ProfileImage
+          src={formData.profilePhotoPreview}
+          alt="프로필 미리보기"
+        />
+      );
+    }
+
+    // 기존 프로필 이미지 표시
+    const hasImage = user?.pphoto && user.pphoto.trim() !== '';
 
     if (hasImage) {
-      const imageUrl = pphoto.startsWith('data:')
-        ? pphoto
-        : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:7474'}/member.photo/${pphoto}`;
+      const imageUrl = user.pphoto.startsWith('data:')
+        ? user.pphoto
+        : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:7474'}/member.photo/${user.pphoto}`;
 
       return (
         <S.ProfileImage
           src={imageUrl}
-          alt="프로필"
+          alt="현재 프로필"
           onError={(e) => {
             e.target.style.display = 'none';
             const defaultIcon = e.target.parentNode.querySelector('.default-icon');
@@ -132,7 +145,7 @@ const ModifyUserPage = () => {
     return <S.DefaultProfileIcon className="default-icon">👤</S.DefaultProfileIcon>;
   };
 
-  // 🔥 폼 제출 처리
+  // 🔥 폼 제출 처리 - FormData 사용
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -145,7 +158,7 @@ const ModifyUserPage = () => {
     // 변경사항이 있는지 확인
     const hasNicknameChange = formData.nickname !== user?.nick;
     const hasPasswordChange = formData.newPassword.trim() !== '';
-    const hasImageChange = formData.profilePhoto !== user?.pphoto;
+    const hasImageChange = formData.profilePhoto !== null;
 
     if (!hasNicknameChange && !hasPasswordChange && !hasImageChange) {
       toast.info('변경할 정보를 선택해주세요.');
@@ -180,40 +193,32 @@ const ModifyUserPage = () => {
     setLoading(true);
 
     try {
-      // 🔥 먼저 현재 비밀번호 확인
+      // 먼저 현재 비밀번호 확인
       const passwordResult = await BACK_USER_API.verifyPassword(
         user.loginId,
         formData.currentPassword,
       );
 
-      if (!passwordResult.success) {
+      if (!passwordResult.pwpossible) {
         toast.error('현재 비밀번호가 올바르지 않습니다.');
         return;
       }
 
-      // 🔥 변경할 데이터만 포함
+      // 변경할 데이터 준비
+
+      // 🔥 기존 updateUserInfo 메서드 사용 (이미 FormData 처리됨)
       const updateData = {};
+      if (hasNicknameChange) updateData.nickname = formData.nickname;
+      if (hasPasswordChange) updateData.password = formData.newPassword;
+      if (hasImageChange) updateData.profilePhoto = formData.profilePhoto;
 
-      if (hasNicknameChange) {
-        updateData.nickname = formData.nickname;
-      }
-
-      if (hasPasswordChange) {
-        updateData.password = formData.newPassword;
-      }
-
-      if (hasImageChange) {
-        updateData.profilePhoto = formData.profilePhoto;
-      }
-
-      // 🔥 회원정보 수정 API 호출
       const result = await BACK_USER_API.updateUserInfo(
         user.loginId,
         updateData,
-        formData.currentPassword,
+        formData.currentPassword
       );
 
-      if (result.success) {
+      if (result.resultD) {
         const changes = [];
         if (hasNicknameChange) changes.push('닉네임');
         if (hasPasswordChange) changes.push('비밀번호');
@@ -221,13 +226,12 @@ const ModifyUserPage = () => {
 
         toast.success(`${changes.join(', ')}이(가) 성공적으로 수정되었습니다!`);
 
-        // 🔥 비밀번호 변경 시 보안상 재로그인 요구
+        // 비밀번호 변경 시 보안상 재로그인 요구
         if (hasPasswordChange) {
           await logout();
           toast.info('비밀번호가 변경되어 다시 로그인해주세요.');
           navigate(ROUTES.LOGIN);
         } else {
-          // 비밀번호 변경이 아닌 경우 UserPage로 이동
           navigate(ROUTES.USER);
         }
       } else {
@@ -238,6 +242,10 @@ const ModifyUserPage = () => {
       toast.error(error.message || '회원정보 수정 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
+      // 🔥 미리보기 URL 정리
+      if (formData.profilePhotoPreview) {
+        URL.revokeObjectURL(formData.profilePhotoPreview);
+      }
     }
   };
 
@@ -252,7 +260,7 @@ const ModifyUserPage = () => {
         <S.Subtitle>변경하고 싶은 정보만 선택해서 수정하세요</S.Subtitle>
 
         <S.Form onSubmit={handleSubmit}>
-          {/* 🔥 현재 비밀번호 (필수) */}
+          {/* 현재 비밀번호 (필수) */}
           <S.RequiredSection>
             <S.SectionTitle>🔐 현재 비밀번호 확인 (필수)</S.SectionTitle>
             <S.InputGroup>
@@ -272,11 +280,11 @@ const ModifyUserPage = () => {
             </S.InputGroup>
           </S.RequiredSection>
 
-          {/* 🔥 프로필 사진 (선택) */}
+          {/* 프로필 사진 (선택) */}
           <S.OptionalSection>
             <S.SectionTitle>🖼️ 프로필 사진 변경 (선택)</S.SectionTitle>
             <S.ProfileImageContainer>
-              {renderProfileImage(formData.profilePhoto)}
+              {renderProfileImage()}
               <S.ImageUploadButton
                 type="button"
                 onClick={() => document.getElementById('profileImage').click()}
@@ -295,7 +303,7 @@ const ModifyUserPage = () => {
             <S.HelpText>클릭해서 새로운 프로필 사진을 선택하세요. (최대 5MB)</S.HelpText>
           </S.OptionalSection>
 
-          {/* 🔥 닉네임 변경 (선택) */}
+          {/* 닉네임 변경 (선택) */}
           <S.OptionalSection>
             <S.SectionTitle>👤 닉네임 변경 (선택)</S.SectionTitle>
             <S.InputGroup>
@@ -325,7 +333,7 @@ const ModifyUserPage = () => {
             </S.InputGroup>
           </S.OptionalSection>
 
-          {/* 🔥 비밀번호 변경 (선택) */}
+          {/* 비밀번호 변경 (선택) */}
           <S.OptionalSection>
             <S.SectionTitle>🔑 비밀번호 변경 (선택)</S.SectionTitle>
             <S.InputGroup>
