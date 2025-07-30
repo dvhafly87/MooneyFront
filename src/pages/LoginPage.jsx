@@ -278,7 +278,6 @@ function LoginPage() {
         toast.error(result.message);
         setIsIdChecked(false);
       }
-
     } catch (error) {
       toast.error('아이디 중복 확인 중 오류가 발생했습니다.');
       setIsIdChecked(false);
@@ -449,6 +448,7 @@ function LoginPage() {
         </motion.button>
       </motion.form>
 
+      {/*
       <motion.div variants={itemVariants}>
         <S.LinkSection>
           <motion.button
@@ -518,6 +518,7 @@ function LoginPage() {
           </motion.button>
         ))}
       </motion.div>
+      */}
 
       <motion.div
         variants={itemVariants}

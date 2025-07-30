@@ -4,7 +4,7 @@ import 'react-calendar/dist/Calendar.css';
 import '../css/AccountBook.css';
 import noExpImg from '../img/no_exp.png';
 
-const BASE_URL = 'http://localhost:7474';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 let MEMBER_ID = null;
 
 const AccountBookPage = () => {
@@ -19,8 +19,8 @@ const AccountBookPage = () => {
   const [entries, setEntries] = useState({ income: [], expense: [] });
   const [editTarget, setEditTarget] = useState(null);
   const [repeat, setRepeat] = useState(false);
-  const [pendingType, setPendingType] = useState("");
-  const [freqType, setFreqType] = useState("");
+  const [pendingType, setPendingType] = useState('');
+  const [freqType, setFreqType] = useState('');
 
   const formatDateKey = (d) => {
     const yyyy = d.getFullYear();
@@ -70,7 +70,7 @@ const AccountBookPage = () => {
     } else {
       console.log('로그인 상태가 저장되어 있지 않습니다.');
     }
-  }
+  };
 
   useEffect(() => {
     getUserinfo();
@@ -254,18 +254,18 @@ const AccountBookPage = () => {
           <div className="repeat-checkbox">
             <label htmlFor="repeat">💡 지출 상태</label>
             <select value={pendingType} onChange={(e) => setPendingType(e.target.value)}>
-              <option value='COMPLETED'>일시불</option>
-              <option value='PENDING'>지출 대기중</option>
+              <option value="COMPLETED">일시불</option>
+              <option value="PENDING">지출 대기중</option>
             </select>
           </div>
 
           <div className="repeat-checkbox">
             <label htmlFor="repeat">💡 지출 타입</label>
             <select value={freqType} onChange={(e) => setFreqType(e.target.value)}>
-              <option value='DAILY'>1회성 지출</option>
-              <option value='WEEKLY'>주간 지출</option>
-              <option value='MONTHLY'>월간 지출</option>
-              <option value='YEARLY'>연간 지출</option>
+              <option value="DAILY">1회성 지출</option>
+              <option value="WEEKLY">주간 지출</option>
+              <option value="MONTHLY">월간 지출</option>
+              <option value="YEARLY">연간 지출</option>
             </select>
           </div>
 

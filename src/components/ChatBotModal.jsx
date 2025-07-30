@@ -92,7 +92,7 @@ export default function ChatBotModal({ onClose }) {
     formData.append('userinfo', userinfo?.id || 'unknown');
 
     try {
-      const res = await fetch('http://localhost:7474/llama3-api', {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/llama3-api`, {
         method: 'POST',
         body: formData,
         credentials: 'include',

@@ -112,7 +112,6 @@ export const getUserInfo = async (loginId) => {
 
 // 🔥 회원정보 수정 API - 수정됨
 export const updateUserInfo = async (loginId, updateData, currentPassword) => {
-
   const formData = new FormData();
   formData.append('eid', loginId);
   formData.append('ecurpw', currentPassword);
