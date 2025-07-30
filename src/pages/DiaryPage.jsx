@@ -198,7 +198,7 @@ const DiaryPage = () => {
           <div className="diary-calendar-wrapper">
             {showCalendar && (
               <div className="diary-calendar-popup">
-                <Calendar onChange={handleDateChange} value={date} />
+                <Calendar className="my-calendar" onChange={handleDateChange} value={date} />
               </div>
             )}
           </div>

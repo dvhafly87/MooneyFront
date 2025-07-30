@@ -318,7 +318,8 @@ function LoginPage() {
         toast.success(result.message);
         setIsEmailCodeSent(true);
         if (result.__dev_code) {
-          toast.info(`개발용 인증코드: ${result.__dev_code}`);
+          // 이 토스트 메세지의 경우 개발 환경에서만 작용하도록
+          toast.info(`개발용 인증코드: ${result.__dev_code}`, { autoClose: 5000 });
         }
       }
     } catch (error) {
